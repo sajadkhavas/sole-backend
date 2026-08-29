@@ -2,16 +2,28 @@
 
 namespace App\Models;
 
+use Database\Factories\ProductVariantFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProductVariant extends Model
 {
+    /** @use HasFactory<ProductVariantFactory> */
+    use HasFactory;
+
     protected $fillable = [
-        'product_id', 'sku', 'title', 'size', 'color', 'price_minor',
-        'compare_at_price_minor', 'currency', 'is_active',
+        'product_id',
+        'sku',
+        'title',
+        'size',
+        'color',
+        'price_minor',
+        'compare_at_price_minor',
+        'currency',
+        'is_active',
     ];
 
     protected function casts(): array

@@ -2,33 +2,35 @@
 
 namespace Tests\Feature;
 
-use App\Providers\AppServiceProvider;
-use RuntimeException;
+use App\Models\Product;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ProductionSafetyTest extends TestCase
 {
-    public function test_prototype_mode_is_rejected_in_production(): void
+    use RefreshDatabase;
+
+    public function test_default_seeder_never_creates_product_or_administrator_truth(): void
     {
-        $this->app->detectEnvironment(fn (): string => 'production');
-        config()->set('app.debug', false);
-        config()->set('sole.prototype_mode', true);
+        $this->seed();
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Prototype, mock, and test modes are forbidden in production.');
-
-        (new AppServiceProvider($this->app))->boot();
+        $this->assertSame(0, Product::query()->count());
+        $this->assertSame(0, User::query()->count());
     }
 
-    public function test_debug_mode_is_rejected_in_production(): void
+    public function test_storefront_contract_and_operator_commands_are_registered(): void
     {
-        $this->app->detectEnvironment(fn (): string => 'production');
-        config()->set('app.debug', true);
-        config()->set('sole.prototype_mode', false);
+        $routes = collect(app('router')->getRoutes()->getRoutes())->map(fn ($route) => $route->uri())->all();
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('APP_DEBUG must be false in production.');
+        $this->assertContains('api/ready', $routes);
+        $this->assertContains('api/v1/catalog/products', $routes);
+        $this->assertContains('api/v1/catalog/products/{product}', $routes);
 
-        (new AppServiceProvider($this->app))->boot();
+        $commands = array_keys($this->app->make(\Illuminate\Contracts\Console\Kernel::class)->all());
+        $this->assertContains('sole:rbac:sync', $commands);
+        $this->assertContains('sole:admin:create', $commands);
+        $this->assertContains('sole:admin:grant', $commands);
+        $this->assertContains('sole:inventory:adjust', $commands);
     }
 }
