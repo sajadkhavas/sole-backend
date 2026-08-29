@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BusinessSetting;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Database\QueryException;
@@ -23,7 +24,7 @@ class DatabaseIntegrityTest extends TestCase
 
     public function test_business_setting_value_changes_increment_version(): void
     {
-        $setting = \App\Models\BusinessSetting::query()->create([
+        $setting = BusinessSetting::query()->create([
             'key' => 'commerce.currency',
             'value' => ['code' => 'IRR'],
         ]);

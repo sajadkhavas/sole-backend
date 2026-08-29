@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Product;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\RbacProvisioner;
@@ -30,8 +31,8 @@ class AdminAccessSecurityTest extends TestCase
         $admin->roles()->attach($role);
 
         $this->assertTrue($admin->canAccessPanel($panel));
-        $this->assertTrue(Gate::forUser($admin)->allows('viewAny', \App\Models\Product::class));
-        $this->assertFalse(Gate::forUser($admin)->allows('delete', \App\Models\Product::factory()->create()));
+        $this->assertTrue(Gate::forUser($admin)->allows('viewAny', Product::class));
+        $this->assertFalse(Gate::forUser($admin)->allows('delete', Product::factory()->create()));
     }
 
     public function test_rbac_sync_is_idempotent_and_never_grants_a_user_access(): void

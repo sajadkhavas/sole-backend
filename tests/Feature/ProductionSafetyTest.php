@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Product;
 use App\Models\User;
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -27,7 +28,7 @@ class ProductionSafetyTest extends TestCase
         $this->assertContains('api/v1/catalog/products', $routes);
         $this->assertContains('api/v1/catalog/products/{product}', $routes);
 
-        $commands = array_keys($this->app->make(\Illuminate\Contracts\Console\Kernel::class)->all());
+        $commands = array_keys($this->app->make(Kernel::class)->all());
         $this->assertContains('sole:rbac:sync', $commands);
         $this->assertContains('sole:admin:create', $commands);
         $this->assertContains('sole:admin:grant', $commands);
