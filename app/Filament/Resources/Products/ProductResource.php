@@ -1,0 +1,69 @@
+<?php
+
+namespace App\Filament\Resources\Products;
+
+use App\Filament\Resources\Products\Pages\ManageProducts;
+use App\Models\Product;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Illuminate\Support\Facades\Gate;
+
+class ProductResource extends Resource
+{
+    protected static ?string $model = Product::class;
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function form(Schema $schema): Schema
+    {
+        return $schema->components([
+            TextInput::make('name')->required()->maxLength(255),
+            TextInput::make('slug')->required()->maxLength(255)->unique(ignoreRecord: true),
+            Select::make('category_id')->relationship('category', 'name')->searchable()->preload(),
+            Select::make('collections')->relationship('collections', 'name')->multiple()->searchable()->preload(),
+            Textarea::make('description')->rows(6)->columnSpanFull(),
+        ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                TextColumn::make('name')->searchable()->sortable(),
+                TextColumn::make('slug')->searchable(),
+                TextColumn::make('category.name')->label('Category')->sortable(),
+                TextColumn::make('status')->badge()->sortable(),
+                TextColumn::make('published_at')->dateTime()->sortable(),
+            ])
+            ->recordActions([
+                EditAction::make(),
+                Action::make('publish')
+                    ->requiresConfirmation()
+                    ->visible(fn (Product $record): bool => auth()->user()?->can('publish', $record) ?? false)
+                    ->action(function (Product $record): void {
+                        Gate::authorize('publish', $record);
+                        $record->forceFill(['status' => 'published', 'published_at' => now()])->save();
+                    }),
+                Action::make('archive')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(fn (Product $record): bool => $record->status !== 'archived' && (auth()->user()?->can('archive', $record) ?? false))
+                    ->action(function (Product $record): void {
+                        Gate::authorize('archive', $record);
+                        $record->forceFill(['status' => 'archived'])->save();
+                    }),
+            ]);
+    }
+
+    public static function getPages(): array
+    {
+        return ['index' => ManageProducts::route('/')];
+    }
+}
