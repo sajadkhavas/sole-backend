@@ -32,6 +32,7 @@ class ProductionSafetyTest extends TestCase
         $this->assertContains('sole:rbac:sync', $commands);
         $this->assertContains('sole:admin:create', $commands);
         $this->assertContains('sole:admin:grant', $commands);
+        $this->assertContains('sole:admin:revoke', $commands);
         $this->assertContains('sole:inventory:adjust', $commands);
     }
 }

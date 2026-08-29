@@ -51,7 +51,7 @@ return new class extends Migration
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->timestamp('created_at')->useCurrent();
-            $table->index(['subject_type', 'subject_id']);
+            $table->index(['subject_type', 'subject_id'], 'audit_subject_index');
         });
 
         Schema::create('categories', function (Blueprint $table) {
@@ -99,7 +99,7 @@ return new class extends Migration
             $table->char('currency', 3)->default('IRR');
             $table->boolean('is_active')->default(true)->index();
             $table->timestamps();
-            $table->index(['product_id', 'is_active']);
+            $table->index(['product_id', 'is_active'], 'variant_product_active_index');
         });
 
         Schema::create('inventory_locations', function (Blueprint $table) {
@@ -132,8 +132,8 @@ return new class extends Migration
             $table->string('reference_id')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamp('created_at')->useCurrent();
-            $table->index(['product_variant_id', 'inventory_location_id']);
-            $table->index(['reference_type', 'reference_id']);
+            $table->index(['product_variant_id', 'inventory_location_id'], 'inventory_variant_location_index');
+            $table->index(['reference_type', 'reference_id'], 'inventory_reference_index');
         });
 
         Schema::create('business_settings', function (Blueprint $table) {
