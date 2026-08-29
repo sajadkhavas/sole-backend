@@ -1,0 +1,79 @@
+openapi: 3.1.0
+info:
+  title: SOLE Storefront Catalog API
+  version: 1.0.0
+  description: Read-only P01 contract. Product, price and availability truth is backend-authoritative.
+servers:
+  - url: /api
+paths:
+  /ready:
+    get:
+      operationId: readiness
+      responses:
+        '200':
+          description: Database-backed application readiness
+  /v1/catalog/products:
+    get:
+      operationId: listCatalogProducts
+      parameters:
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Published products that currently have at least one sellable variant
+  /v1/catalog/products/{slug}:
+    get:
+      operationId: getCatalogProduct
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Published product with sellable variants
+        '404':
+          description: Product is missing, unpublished or not sellable
+components:
+  schemas:
+    Money:
+      type: object
+      required: [price_minor, currency]
+      properties:
+        price_minor:
+          type: integer
+          minimum: 0
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+    CatalogVariant:
+      type: object
+      required: [id, sku, title, price_minor, currency, available_quantity]
+      properties:
+        id:
+          type: integer
+        sku:
+          type: string
+        title:
+          type: string
+        size:
+          type: [string, 'null']
+        color:
+          type: [string, 'null']
+        price_minor:
+          type: integer
+          minimum: 0
+        compare_at_price_minor:
+          type: [integer, 'null']
+          minimum: 0
+        currency:
+          type: string
+        available_quantity:
+          type: integer
+          minimum: 0
