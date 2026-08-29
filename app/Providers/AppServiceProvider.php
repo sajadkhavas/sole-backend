@@ -2,34 +2,49 @@
 
 namespace App\Providers;
 
+use App\Models\AuditLog;
+use App\Models\BusinessSetting;
+use App\Models\Category;
+use App\Models\Collection;
+use App\Models\InventoryLocation;
+use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\User;
+use App\Observers\AuditableObserver;
+use App\Policies\AuditLogPolicy;
+use App\Policies\BusinessSettingPolicy;
+use App\Policies\CategoryPolicy;
+use App\Policies\CollectionPolicy;
+use App\Policies\InventoryLocationPolicy;
+use App\Policies\ProductPolicy;
+use App\Policies\ProductVariantPolicy;
+use App\Policies\UserPolicy;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
-use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        if (! $this->app->environment('production')) {
-            return;
-        }
+        Model::preventSilentlyDiscardingAttributes(! app()->isProduction());
 
-        if ((bool) config('app.debug')) {
-            throw new RuntimeException('APP_DEBUG must be false in production.');
-        }
+        Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(Category::class, CategoryPolicy::class);
+        Gate::policy(Collection::class, CollectionPolicy::class);
+        Gate::policy(Product::class, ProductPolicy::class);
+        Gate::policy(ProductVariant::class, ProductVariantPolicy::class);
+        Gate::policy(InventoryLocation::class, InventoryLocationPolicy::class);
+        Gate::policy(BusinessSetting::class, BusinessSettingPolicy::class);
+        Gate::policy(AuditLog::class, AuditLogPolicy::class);
 
-        if ((bool) config('sole.prototype_mode')) {
-            throw new RuntimeException('Prototype, mock, and test modes are forbidden in production.');
+        foreach ([User::class, Category::class, Collection::class, Product::class, ProductVariant::class, InventoryLocation::class, BusinessSetting::class] as $model) {
+            $model::observe(AuditableObserver::class);
         }
     }
 }
