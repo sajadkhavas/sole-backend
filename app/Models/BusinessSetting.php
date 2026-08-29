@@ -8,6 +8,10 @@ class BusinessSetting extends Model
 {
     protected $fillable = ['key', 'value'];
 
+    protected $attributes = [
+        'version' => 1,
+    ];
+
     protected function casts(): array
     {
         return ['value' => 'array'];
