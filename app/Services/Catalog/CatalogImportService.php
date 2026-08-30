@@ -16,9 +16,7 @@ use JsonException;
 
 class CatalogImportService
 {
-    public function __construct(private readonly MediaAttachmentService $attachments)
-    {
-    }
+    public function __construct(private readonly MediaAttachmentService $attachments) {}
 
     public function fromFile(string $path, bool $apply = false): array
     {
