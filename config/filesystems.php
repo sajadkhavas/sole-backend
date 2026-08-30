@@ -21,6 +21,7 @@ return [
         'media_quarantine' => [
             'driver' => 'local',
             'root' => storage_path('app/media-quarantine'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/media-quarantine',
             'serve' => true,
             'throw' => true,
             'report' => true,
