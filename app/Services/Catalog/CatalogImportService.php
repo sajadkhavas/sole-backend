@@ -16,7 +16,9 @@ use JsonException;
 
 class CatalogImportService
 {
-    public function __construct(private readonly MediaAttachmentService $attachments) {}
+    public function __construct(private readonly MediaAttachmentService $attachments)
+    {
+    }
 
     public function fromFile(string $path, bool $apply = false): array
     {
@@ -147,31 +149,38 @@ class CatalogImportService
         foreach ($manifest['categories'] ?? [] as $row) {
             $this->requiredString($row, 'name', 'CATEGORY_NAME');
         }
+
         foreach ($manifest['collections'] ?? [] as $row) {
             $this->requiredString($row, 'name', 'COLLECTION_NAME');
         }
+
         foreach ($manifest['products'] ?? [] as $row) {
             $this->requiredString($row, 'name', 'PRODUCT_NAME');
             if (isset($row['category_slug']) && ! in_array($row['category_slug'], $categorySlugs, true)) {
                 throw new DomainException('CATALOG_PRODUCT_CATEGORY_REFERENCE_INVALID');
             }
+
             foreach ($row['collection_slugs'] ?? [] as $slug) {
                 if (! in_array($slug, $collectionSlugs, true)) {
                     throw new DomainException('CATALOG_PRODUCT_COLLECTION_REFERENCE_INVALID');
                 }
             }
         }
+
         foreach ($manifest['variants'] ?? [] as $row) {
             $this->requiredString($row, 'title', 'VARIANT_TITLE');
             if (! in_array($row['product_slug'] ?? null, $productSlugs, true)) {
                 throw new DomainException('CATALOG_VARIANT_PRODUCT_REFERENCE_INVALID');
             }
+
             if (! is_int($row['price_minor'] ?? null) || $row['price_minor'] < 0) {
                 throw new DomainException('CATALOG_VARIANT_PRICE_INVALID');
             }
+
             if (isset($row['compare_at_price_minor']) && (! is_int($row['compare_at_price_minor']) || $row['compare_at_price_minor'] < $row['price_minor'])) {
                 throw new DomainException('CATALOG_VARIANT_COMPARE_PRICE_INVALID');
             }
+
             if (strlen((string) ($row['currency'] ?? 'IRR')) !== 3) {
                 throw new DomainException('CATALOG_VARIANT_CURRENCY_INVALID');
             }
@@ -185,6 +194,7 @@ class CatalogImportService
             if (! isset(MediaAttachmentService::SUBJECTS[$type])) {
                 throw new DomainException('CATALOG_MEDIA_SUBJECT_TYPE_INVALID');
             }
+
             $validKey = match ($type) {
                 'product' => in_array($key, $productSlugs, true),
                 'variant' => in_array($key, $skus, true),
@@ -194,6 +204,7 @@ class CatalogImportService
             if (! $validKey) {
                 throw new DomainException('CATALOG_MEDIA_SUBJECT_REFERENCE_INVALID');
             }
+
             if (! MediaAsset::query()->where('uuid', $uuid)->where('status', MediaAsset::STATUS_READY)->exists()) {
                 throw new DomainException('CATALOG_MEDIA_ASSET_NOT_READY');
             }
@@ -215,12 +226,15 @@ class CatalogImportService
             if (! is_array($row)) {
                 throw new DomainException('CATALOG_'.$label.'_ROW_INVALID');
             }
+
             $value = $this->requiredString($row, $field, $label.'_'.$field);
             if (isset($keys[$value])) {
                 throw new DomainException('CATALOG_'.$label.'_DUPLICATE');
             }
+
             $keys[$value] = true;
         }
+
         return array_keys($keys);
     }
 
@@ -230,6 +244,7 @@ class CatalogImportService
         if ($value === '') {
             throw new DomainException('CATALOG_'.$label.'_REQUIRED');
         }
+
         return $value;
     }
 }

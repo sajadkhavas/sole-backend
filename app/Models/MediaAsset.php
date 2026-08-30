@@ -9,7 +9,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class MediaAsset extends Model
 {
     public const STATUS_PENDING = 'pending_upload';
+
     public const STATUS_READY = 'ready';
+
     public const STATUS_REJECTED = 'rejected';
 
     protected $fillable = [

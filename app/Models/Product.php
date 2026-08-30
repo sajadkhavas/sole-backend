@@ -22,10 +22,25 @@ class Product extends Model
         return ['published_at' => 'datetime', 'tags' => 'array'];
     }
 
-    public function category(): BelongsTo { return $this->belongsTo(Category::class); }
-    public function collections(): BelongsToMany { return $this->belongsToMany(Collection::class); }
-    public function variants(): HasMany { return $this->hasMany(ProductVariant::class); }
-    public function mediaAttachments(): HasMany { return $this->hasMany(MediaAttachment::class, 'subject_id')->where('subject_type', 'product'); }
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function collections(): BelongsToMany
+    {
+        return $this->belongsToMany(Collection::class);
+    }
+
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    public function mediaAttachments(): HasMany
+    {
+        return $this->hasMany(MediaAttachment::class, 'subject_id')->where('subject_type', 'product');
+    }
 
     public function scopePublished(Builder $query): Builder
     {

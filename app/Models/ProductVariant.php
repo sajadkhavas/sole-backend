@@ -21,9 +21,20 @@ class ProductVariant extends Model
         return ['price_minor' => 'integer', 'compare_at_price_minor' => 'integer', 'is_active' => 'boolean'];
     }
 
-    public function product(): BelongsTo { return $this->belongsTo(Product::class); }
-    public function inventoryBalances(): HasMany { return $this->hasMany(InventoryBalance::class); }
-    public function mediaAttachments(): HasMany { return $this->hasMany(MediaAttachment::class, 'subject_id')->where('subject_type', 'variant'); }
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    public function inventoryBalances(): HasMany
+    {
+        return $this->hasMany(InventoryBalance::class);
+    }
+
+    public function mediaAttachments(): HasMany
+    {
+        return $this->hasMany(MediaAttachment::class, 'subject_id')->where('subject_type', 'variant');
+    }
 
     public function scopeSellable(Builder $query): Builder
     {

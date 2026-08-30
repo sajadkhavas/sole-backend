@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\MediaAsset;
-use App\Models\MediaAttachment;
 use App\Models\Product;
 use App\Services\Media\MediaAttachmentService;
 use App\Services\Media\MediaProcessor;
