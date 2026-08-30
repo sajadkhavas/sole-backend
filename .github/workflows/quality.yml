@@ -30,37 +30,29 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
-
     steps:
       - name: Checkout exact revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
       - name: Setup PHP 8.5
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
         with:
           php-version: '8.5'
-          extensions: bcmath, curl, dom, fileinfo, intl, mbstring, mysql, pdo, pdo_mysql, pcntl, xml, xmlreader, xmlwriter, zip
+          extensions: bcmath, curl, dom, exif, fileinfo, gd, intl, mbstring, mysql, pdo, pdo_mysql, pcntl, xml, xmlreader, xmlwriter, zip
           coverage: none
-
       - name: Validate Composer manifest
         run: composer validate --strict
-
       - name: Install locked dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
-
       - name: Prepare test environment
         run: |
           cp .env.example .env
           php artisan key:generate --no-interaction
-
       - name: Verify code style
         run: vendor/bin/pint --test
-
       - name: Static PHP syntax analysis
         run: find app config database routes tests -name '*.php' -print0 | xargs -0 -n1 php -l
-
       - name: Verify migrations and RBAC on MySQL
         env: &mysql-test-env
           APP_ENV: testing
@@ -80,26 +72,20 @@ jobs:
           php artisan sole:rbac:sync
           php artisan migrate:rollback --step=1 --force
           php artisan migrate --force
-
       - name: Run fast regression suite on SQLite
         run: php artisan test
-
       - name: Run full integration suite on MySQL
         env: *mysql-test-env
         run: php artisan test
-
       - name: Verify real MySQL inventory concurrency
         env: *mysql-test-env
         run: php tests/Support/inventory-concurrency.php
-
       - name: Verify routes and operator surface boot
         run: |
           php artisan route:list --except-vendor
           php artisan list sole
-
       - name: Audit locked production dependencies
         run: composer audit --locked --no-dev
-
       - name: Verify production configuration cache
         env:
           APP_ENV: production
