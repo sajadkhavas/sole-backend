@@ -10,7 +10,7 @@ use InvalidArgumentException;
 
 class MediaUploadService
 {
-    public function createIntent(User $user, string $filename, string $declaredMime, int $declaredBytes): array
+    public function createIntent(User $user, string $filename, string $declaredMime, int $declaredBytes, ?string $altText = null, float $focalX = 0.5, float $focalY = 0.5): array
     {
         if (! $user->hasPermission('catalog.update')) {
             abort(403);
@@ -22,6 +22,10 @@ class MediaUploadService
 
         if ($declaredBytes < 1 || $declaredBytes > (int) config('sole_media.max_bytes')) {
             throw new InvalidArgumentException('MEDIA_DECLARED_SIZE_INVALID');
+        }
+
+        if ($focalX < 0 || $focalX > 1 || $focalY < 0 || $focalY > 1) {
+            throw new InvalidArgumentException('MEDIA_FOCAL_POINT_INVALID');
         }
 
         $uuid = (string) Str::uuid();
@@ -37,6 +41,9 @@ class MediaUploadService
             'bytes' => $declaredBytes,
             'quarantine_disk' => $disk,
             'quarantine_path' => $path,
+            'focal_x' => $focalX,
+            'focal_y' => $focalY,
+            'alt_text' => $altText === null ? null : trim($altText),
         ]);
 
         $expiresAt = now()->addMinutes(max(1, (int) config('sole_media.upload_ttl_minutes')));

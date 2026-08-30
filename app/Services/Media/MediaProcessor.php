@@ -2,6 +2,7 @@
 
 namespace App\Services\Media;
 
+use App\Contracts\MediaMalwareScanner;
 use App\Models\MediaAsset;
 use App\Models\MediaVariant;
 use DomainException;
@@ -13,6 +14,8 @@ use Throwable;
 
 class MediaProcessor
 {
+    public function __construct(private readonly MediaMalwareScanner $malwareScanner) {}
+
     public function process(MediaAsset $asset): MediaAsset
     {
         if ($asset->status === MediaAsset::STATUS_READY) {
@@ -35,7 +38,13 @@ class MediaProcessor
                 throw new DomainException('MEDIA_SIZE_LIMIT');
             }
 
+            if ($asset->bytes !== null && (int) $asset->bytes !== $bytesCount) {
+                throw new DomainException('MEDIA_DECLARED_SIZE_MISMATCH');
+            }
+
             $bytes = $disk->get($asset->quarantine_path);
+            $this->malwareScanner->assertClean($bytes);
+
             $mime = (new \finfo(FILEINFO_MIME_TYPE))->buffer($bytes) ?: 'application/octet-stream';
             if (! in_array($mime, config('sole_media.allowed_mimes'), true)) {
                 throw new DomainException('MEDIA_MIME_REJECTED');
@@ -75,8 +84,9 @@ class MediaProcessor
             $sourceDisk = $asset->quarantine_disk;
             $deliveryDisk = (string) config('sole_media.delivery_disk');
             $recipeVersion = (int) config('sole_media.recipe_version');
+            $cacheControl = (string) config('sole_media.immutable_cache_control');
 
-            DB::transaction(function () use ($asset, $bytes, $bytesCount, $mime, $width, $height, $sha, $sourcePath, $sourceDisk, $deliveryDisk, $recipeVersion, $image): void {
+            DB::transaction(function () use ($asset, $bytes, $bytesCount, $mime, $width, $height, $sha, $sourcePath, $sourceDisk, $deliveryDisk, $recipeVersion, $cacheControl, $image): void {
                 Storage::disk($sourceDisk)->put($sourcePath, $bytes);
 
                 foreach ((array) config('sole_media.recipes') as $name => $recipe) {
@@ -90,7 +100,10 @@ class MediaProcessor
                         (float) $asset->focal_y,
                     );
                     $path = $sha.'/v'.$recipeVersion.'/'.$name.'.webp';
-                    Storage::disk($deliveryDisk)->put($path, $variantBytes, ['visibility' => 'public']);
+                    Storage::disk($deliveryDisk)->put($path, $variantBytes, [
+                        'visibility' => 'public',
+                        'CacheControl' => $cacheControl,
+                    ]);
 
                     MediaVariant::updateOrCreate(
                         ['media_asset_id' => $asset->getKey(), 'recipe' => $name, 'recipe_version' => $recipeVersion],
@@ -106,6 +119,11 @@ class MediaProcessor
                     );
                 }
 
+                $metadata = (array) ($asset->metadata ?? []);
+                $metadata['malware_scan'] = 'clean';
+                $metadata['malware_scanned_at'] = now()->toAtomString();
+                $metadata['cache_control'] = $cacheControl;
+
                 $asset->forceFill([
                     'status' => MediaAsset::STATUS_READY,
                     'detected_mime' => $mime,
@@ -116,6 +134,7 @@ class MediaProcessor
                     'sha256' => $sha,
                     'source_disk' => $sourceDisk,
                     'source_path' => $sourcePath,
+                    'metadata' => $metadata,
                     'rejection_code' => null,
                     'ingested_at' => now(),
                 ])->save();

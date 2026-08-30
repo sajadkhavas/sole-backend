@@ -31,6 +31,11 @@ class MediaAttachmentService
             throw new DomainException('MEDIA_ATTACHMENT_SUBJECT_INVALID');
         }
 
+        $resolvedAlt = trim((string) ($altText ?: $asset->alt_text));
+        if ($role !== 'decorative' && $resolvedAlt === '') {
+            throw new DomainException('MEDIA_ALT_TEXT_REQUIRED');
+        }
+
         return MediaAttachment::updateOrCreate(
             [
                 'media_asset_id' => $asset->getKey(),
@@ -39,7 +44,7 @@ class MediaAttachmentService
                 'role' => $role,
                 'sort_order' => max(0, $sortOrder),
             ],
-            ['alt_text' => $altText ?: $asset->alt_text],
+            ['alt_text' => $role === 'decorative' ? null : $resolvedAlt],
         );
     }
 

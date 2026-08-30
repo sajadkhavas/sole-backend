@@ -17,9 +17,20 @@ class MediaUploadController extends Controller
             'filename' => ['required', 'string', 'max:255'],
             'mime' => ['required', 'string', 'in:image/jpeg,image/png,image/webp'],
             'bytes' => ['required', 'integer', 'min:1', 'max:'.config('sole_media.max_bytes')],
+            'alt_text' => ['nullable', 'string', 'max:500'],
+            'focal_x' => ['nullable', 'numeric', 'between:0,1'],
+            'focal_y' => ['nullable', 'numeric', 'between:0,1'],
         ]);
 
-        return response()->json(['data' => $uploads->createIntent($request->user(), $data['filename'], $data['mime'], (int) $data['bytes'])], 201);
+        return response()->json(['data' => $uploads->createIntent(
+            $request->user(),
+            $data['filename'],
+            $data['mime'],
+            (int) $data['bytes'],
+            $data['alt_text'] ?? null,
+            (float) ($data['focal_x'] ?? 0.5),
+            (float) ($data['focal_y'] ?? 0.5),
+        )], 201);
     }
 
     public function complete(Request $request, MediaAsset $mediaAsset, MediaProcessor $processor): JsonResponse
