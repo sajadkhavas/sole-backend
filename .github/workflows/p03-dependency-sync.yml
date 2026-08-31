@@ -1,0 +1,36 @@
+name: P03 dependency sync
+
+on:
+  push:
+    branches: [phase/sole-p03-auth-customer-security]
+    paths: [.github/workflows/p03-dependency-sync.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout P03 branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: phase/sole-p03-auth-customer-security
+          fetch-depth: 0
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          coverage: none
+      - name: Add Sanctum with a locked dependency graph
+        run: composer require laravel/sanctum:^4.0 --no-interaction --no-progress --with-all-dependencies
+      - name: Commit locked manifests
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add composer.json composer.lock
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'build(p03): add locked Laravel Sanctum dependency'
+          git push origin HEAD:phase/sole-p03-auth-customer-security
