@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Contracts\MediaMalwareScanner;
 use App\Models\AuditLog;
 use App\Models\BusinessSetting;
 use App\Models\Category;
@@ -21,6 +22,7 @@ use App\Policies\InventoryMovementPolicy;
 use App\Policies\ProductPolicy;
 use App\Policies\ProductVariantPolicy;
 use App\Policies\UserPolicy;
+use App\Services\Media\ClamAvMediaMalwareScanner;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -29,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        $this->app->bind(MediaMalwareScanner::class, ClamAvMediaMalwareScanner::class);
     }
 
     public function boot(): void

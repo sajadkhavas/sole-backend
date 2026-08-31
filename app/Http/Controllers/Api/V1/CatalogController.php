@@ -20,7 +20,8 @@ class CatalogController extends Controller
             ->with([
                 'category:id,name,slug',
                 'collections:id,name,slug',
-                'variants' => fn ($query) => $query->sellable()->with('inventoryBalances'),
+                'mediaAttachments.asset.variants',
+                'variants' => fn ($query) => $query->sellable()->with(['inventoryBalances', 'mediaAttachments.asset.variants']),
             ])
             ->orderByDesc('published_at')
             ->paginate($perPage);
@@ -30,15 +31,13 @@ class CatalogController extends Controller
 
     public function show(Product $product): CatalogProductResource
     {
-        abort_unless(
-            Product::query()->published()->whereKey($product->getKey())->whereHas('variants', fn ($query) => $query->sellable())->exists(),
-            404,
-        );
+        abort_unless(Product::query()->published()->whereKey($product->getKey())->whereHas('variants', fn ($query) => $query->sellable())->exists(), 404);
 
         $product->load([
             'category:id,name,slug',
             'collections:id,name,slug',
-            'variants' => fn ($query) => $query->sellable()->with('inventoryBalances'),
+            'mediaAttachments.asset.variants',
+            'variants' => fn ($query) => $query->sellable()->with(['inventoryBalances', 'mediaAttachments.asset.variants']),
         ]);
 
         return new CatalogProductResource($product);

@@ -15,11 +15,11 @@ class Product extends Model
     /** @use HasFactory<ProductFactory> */
     use HasFactory;
 
-    protected $fillable = ['category_id', 'name', 'slug', 'description', 'status', 'published_at'];
+    protected $fillable = ['category_id', 'name', 'slug', 'description', 'brand', 'colorway', 'tags', 'status', 'published_at'];
 
     protected function casts(): array
     {
-        return ['published_at' => 'datetime'];
+        return ['published_at' => 'datetime', 'tags' => 'array'];
     }
 
     public function category(): BelongsTo
@@ -37,11 +37,13 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
+    public function mediaAttachments(): HasMany
+    {
+        return $this->hasMany(MediaAttachment::class, 'subject_id')->where('subject_type', 'product');
+    }
+
     public function scopePublished(Builder $query): Builder
     {
-        return $query
-            ->where('status', 'published')
-            ->whereNotNull('published_at')
-            ->where('published_at', '<=', now());
+        return $query->where('status', 'published')->whereNotNull('published_at')->where('published_at', '<=', now());
     }
 }

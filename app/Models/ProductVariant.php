@@ -14,21 +14,11 @@ class ProductVariant extends Model
     /** @use HasFactory<ProductVariantFactory> */
     use HasFactory;
 
-    protected $fillable = [
-        'product_id',
-        'sku',
-        'title',
-        'size',
-        'color',
-        'price_minor',
-        'compare_at_price_minor',
-        'currency',
-        'is_active',
-    ];
+    protected $fillable = ['product_id', 'sku', 'title', 'size', 'color', 'price_minor', 'compare_at_price_minor', 'currency', 'is_active'];
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return ['price_minor' => 'integer', 'compare_at_price_minor' => 'integer', 'is_active' => 'boolean'];
     }
 
     public function product(): BelongsTo
@@ -41,15 +31,13 @@ class ProductVariant extends Model
         return $this->hasMany(InventoryBalance::class);
     }
 
-    public function inventoryMovements(): HasMany
+    public function mediaAttachments(): HasMany
     {
-        return $this->hasMany(InventoryMovement::class);
+        return $this->hasMany(MediaAttachment::class, 'subject_id')->where('subject_type', 'variant');
     }
 
     public function scopeSellable(Builder $query): Builder
     {
-        return $query
-            ->where('is_active', true)
-            ->whereHas('inventoryBalances', fn (Builder $balance) => $balance->whereColumn('on_hand', '>', 'reserved'));
+        return $query->where('is_active', true)->whereHas('inventoryBalances', fn (Builder $balance) => $balance->whereColumn('on_hand', '>', 'reserved'));
     }
 }
