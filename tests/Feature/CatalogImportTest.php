@@ -23,6 +23,7 @@ class CatalogImportTest extends TestCase
             'quarantine_disk' => 'media_quarantine', 'quarantine_path' => 'done',
             'source_disk' => 'media_quarantine', 'source_path' => 'originals/a.png',
             'sha256' => str_repeat('a', 64), 'detected_mime' => 'image/png', 'bytes' => 100, 'width' => 20, 'height' => 20,
+            'alt_text' => 'SOLE Runner Black',
         ]);
         $path = storage_path('framework/testing/catalog-manifest.json');
         if (! is_dir(dirname($path))) {
@@ -40,6 +41,8 @@ class CatalogImportTest extends TestCase
         $this->assertSame('applied', $applied['status']);
         $this->assertSame(1, Category::count());
         $this->assertSame(1, Product::count());
+        $this->assertSame('draft', Product::query()->value('status'));
+        $this->assertNull(Product::query()->value('published_at'));
         $this->assertSame(1, ProductVariant::count());
         $this->assertSame(1, CatalogImportRun::count());
 
@@ -62,6 +65,24 @@ class CatalogImportTest extends TestCase
         app(CatalogImportService::class)->fromFile($path, false);
     }
 
+    public function test_import_cannot_bypass_review_and_publication_workflow(): void
+    {
+        $manifest = $this->manifest((string) Str::uuid());
+        $manifest['media'] = [];
+        $manifest['products'][0]['status'] = 'published';
+        $manifest['products'][0]['published_at'] = now()->toAtomString();
+        $path = storage_path('framework/testing/catalog-manifest-published.json');
+        file_put_contents($path, json_encode($manifest, JSON_THROW_ON_ERROR));
+
+        $this->expectExceptionMessage('CATALOG_IMPORT_PRODUCT_STATUS_MUST_BE_DRAFT');
+        try {
+            app(CatalogImportService::class)->fromFile($path, true);
+        } finally {
+            $this->assertSame(0, Product::count());
+            $this->assertSame(0, CatalogImportRun::count());
+        }
+    }
+
     private function manifest(string $mediaUuid): array
     {
         return [
@@ -72,7 +93,7 @@ class CatalogImportTest extends TestCase
             'products' => [[
                 'slug' => 'sole-runner', 'name' => 'SOLE Runner', 'category_slug' => 'running',
                 'collection_slugs' => ['launch'], 'brand' => 'SOLE', 'colorway' => 'Black', 'tags' => ['launch'],
-                'status' => 'published', 'published_at' => now()->subMinute()->toAtomString(),
+                'status' => 'draft',
             ]],
             'variants' => [[
                 'product_slug' => 'sole-runner', 'sku' => 'SOLE-RUN-42', 'title' => '42 Black',

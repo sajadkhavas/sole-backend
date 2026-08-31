@@ -79,8 +79,8 @@ class CatalogImportService
                         'brand' => $row['brand'] ?? null,
                         'colorway' => $row['colorway'] ?? null,
                         'tags' => $row['tags'] ?? null,
-                        'status' => $row['status'] ?? 'draft',
-                        'published_at' => $row['published_at'] ?? null,
+                        'status' => 'draft',
+                        'published_at' => null,
                     ],
                 );
                 $product->collections()->sync(collect($row['collection_slugs'] ?? [])->map(fn ($slug) => $collections[$slug]->getKey())->all());
@@ -158,6 +158,16 @@ class CatalogImportService
 
         foreach ($manifest['products'] ?? [] as $row) {
             $this->requiredString($row, 'name', 'PRODUCT_NAME');
+            $this->requiredString($row, 'brand', 'PRODUCT_BRAND');
+
+            if (($row['status'] ?? 'draft') !== 'draft') {
+                throw new DomainException('CATALOG_IMPORT_PRODUCT_STATUS_MUST_BE_DRAFT');
+            }
+
+            if (array_key_exists('published_at', $row) && $row['published_at'] !== null) {
+                throw new DomainException('CATALOG_IMPORT_PRODUCT_PUBLISHED_AT_FORBIDDEN');
+            }
+
             if (isset($row['category_slug']) && in_array($row['category_slug'], $categorySlugs, true) === false) {
                 throw new DomainException('CATALOG_PRODUCT_CATEGORY_REFERENCE_INVALID');
             }
