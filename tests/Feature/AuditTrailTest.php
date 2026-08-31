@@ -43,4 +43,45 @@ class AuditTrailTest extends TestCase
         $this->expectException(LogicException::class);
         $updated->forceFill(['action' => 'tampered'])->save();
     }
+
+    public function test_user_audit_records_security_state_without_name_email_or_password_pii(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Private Customer',
+            'email' => 'private-customer@example.test',
+            'is_active' => false,
+            'account_status' => 'active',
+        ]);
+
+        $created = AuditLog::query()
+            ->where('subject_type', User::class)
+            ->where('subject_id', $user->getKey())
+            ->where('action', 'created')
+            ->firstOrFail();
+
+        $this->assertSame('active', $created->after['account_status']);
+        $this->assertArrayNotHasKey('name', $created->after);
+        $this->assertArrayNotHasKey('email', $created->after);
+        $this->assertArrayNotHasKey('password', $created->after);
+
+        $user->forceFill([
+            'name' => 'Changed Private Name',
+            'email' => 'changed-private@example.test',
+            'account_status' => 'deletion_requested',
+        ])->save();
+
+        $updated = AuditLog::query()
+            ->where('subject_type', User::class)
+            ->where('subject_id', $user->getKey())
+            ->where('action', 'updated')
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertSame('active', $updated->before['account_status']);
+        $this->assertSame('deletion_requested', $updated->after['account_status']);
+        $this->assertArrayNotHasKey('name', $updated->before);
+        $this->assertArrayNotHasKey('email', $updated->before);
+        $this->assertArrayNotHasKey('name', $updated->after);
+        $this->assertArrayNotHasKey('email', $updated->after);
+    }
 }

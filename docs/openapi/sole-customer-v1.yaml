@@ -1,0 +1,118 @@
+openapi: 3.1.0
+info:
+  title: SOLE Customer Authentication API
+  version: 1.0.0
+  description: >-
+    P03 first-party customer session and account contract. Google is the active sign-in provider.
+    OTP is retained behind a production-safe feature flag and is disabled by default.
+servers:
+  - url: /api/v1
+paths:
+  /auth/me:
+    get:
+      summary: Read the current authenticated customer session
+      security: [{ sanctumSession: [] }]
+      responses:
+        '200': { description: Current customer identity and account-completion state }
+        '401': { description: No authenticated customer session }
+  /auth/logout:
+    post:
+      summary: Invalidate the current customer session
+      security: [{ sanctumSession: [] }]
+      responses:
+        '200': { description: Session invalidated and CSRF token rotated }
+  /customer:
+    get:
+      summary: Read customer profile
+      security: [{ sanctumSession: [] }]
+      responses:
+        '200': { description: Customer profile }
+    put:
+      summary: Update name, normalized Iranian mobile and locale
+      security: [{ sanctumSession: [] }]
+      responses:
+        '200': { description: Updated customer profile }
+        '422': { description: Invalid or duplicate mobile }
+  /customer/addresses:
+    get:
+      summary: List current customer's addresses
+      security: [{ sanctumSession: [] }]
+      responses:
+        '200': { description: Owned addresses only }
+    post:
+      summary: Create an owned customer address
+      security: [{ sanctumSession: [] }]
+      responses:
+        '201': { description: Address created }
+  /customer/addresses/{address}:
+    parameters:
+      - in: path
+        name: address
+        required: true
+        schema: { type: integer, minimum: 1 }
+    put:
+      summary: Update an address owned by the current customer
+      security: [{ sanctumSession: [] }]
+      responses:
+        '200': { description: Address updated }
+        '404': { description: Address is absent or owned by another customer }
+    delete:
+      summary: Delete an address owned by the current customer
+      security: [{ sanctumSession: [] }]
+      responses:
+        '204': { description: Address deleted }
+        '404': { description: Address is absent or owned by another customer }
+  /customer/consents:
+    get:
+      summary: Read append-only customer consent history
+      security: [{ sanctumSession: [] }]
+      responses:
+        '200': { description: Consent event history }
+    post:
+      summary: Append a consent decision
+      security: [{ sanctumSession: [] }]
+      responses:
+        '201': { description: Consent event recorded }
+  /customer/export:
+    get:
+      summary: Export current customer account data
+      security: [{ sanctumSession: [] }]
+      responses:
+        '200': { description: JSON account export }
+  /customer/deletion:
+    post:
+      summary: Request controlled account deletion
+      security: [{ sanctumSession: [] }]
+      responses:
+        '202': { description: Deletion request recorded and still cancelable }
+    delete:
+      summary: Cancel a pending deletion request
+      security: [{ sanctumSession: [] }]
+      responses:
+        '200': { description: Pending deletion cancelled }
+  /customer/otp:
+    post:
+      summary: Request a mobile verification OTP when the retained feature flag is enabled
+      security: [{ sanctumSession: [] }]
+      responses:
+        '202': { description: Challenge issued without returning the OTP code }
+        '404': { description: OTP feature disabled }
+        '429': { description: Request or resend rate limit reached }
+  /customer/otp/verify:
+    post:
+      summary: Verify a single-use OTP challenge when the retained feature flag is enabled
+      security: [{ sanctumSession: [] }]
+      responses:
+        '200': { description: Mobile marked verified }
+        '404': { description: OTP feature disabled or challenge not found }
+        '422': { description: Invalid, expired, replayed or stale challenge }
+        '429': { description: Attempt limit reached }
+components:
+  securitySchemes:
+    sanctumSession:
+      type: apiKey
+      in: cookie
+      name: sole-session
+      description: >-
+        First-party Laravel Sanctum/session authentication. Unsafe methods also require the
+        XSRF token issued through /sanctum/csrf-cookie.
