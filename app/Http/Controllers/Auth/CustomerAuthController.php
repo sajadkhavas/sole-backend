@@ -65,14 +65,15 @@ class CustomerAuthController extends Controller
             }
 
             if ($user === null) {
-                $user = User::query()->create([
+                $user = User::query()->make([
                     'name' => $identity['name'] ?: Str::before($identity['email'], '@'),
                     'email' => $identity['email'],
-                    'email_verified_at' => now(),
                     'password' => Str::random(64),
                     'is_active' => false,
                     'account_status' => 'active',
                 ]);
+                $user->forceFill(['email_verified_at' => now()]);
+                $user->save();
             } elseif ($user->email_verified_at === null) {
                 $user->forceFill(['email_verified_at' => now()])->save();
             }
