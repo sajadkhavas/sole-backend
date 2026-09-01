@@ -1,0 +1,50 @@
+openapi: 3.1.0
+info:
+  title: SOLE Size and Fit API
+  version: 1.0.0
+  description: Source-backed, confidence-aware size guidance. Raw foot length is validated per request and is never persisted.
+servers:
+  - url: /api/v1
+paths:
+  /catalog/products/{product}/fit/recommendation:
+    post:
+      summary: Calculate non-guaranteed size guidance
+      parameters:
+        - in: path
+          name: product
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [foot_length_mm]
+              properties:
+                foot_length_mm: { type: integer, minimum: 180, maximum: 340 }
+                request_id: { type: string, format: uuid }
+      responses:
+        '200': { description: Recommendation, confidence, reason and disclaimer }
+        '404': { description: Published product or published guide unavailable }
+        '422': { description: Measurement invalid }
+        '429': { description: Rate limit reached }
+  /catalog/products/{product}/fit/events:
+    post:
+      summary: Record an allow-listed measurement-free fit interaction
+      responses:
+        '204': { description: Event accepted }
+  /catalog/products/{product}/fit/feedback:
+    put:
+      summary: Store current customer's fit feedback
+      security: [{ sanctumSession: [] }]
+      responses:
+        '201': { description: Feedback created or replaced }
+        '401': { description: Authentication required }
+        '422': { description: Invalid product variant or fit value }
+components:
+  securitySchemes:
+    sanctumSession:
+      type: apiKey
+      in: cookie
+      name: sole-session

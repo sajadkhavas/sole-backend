@@ -21,6 +21,7 @@ class CatalogController extends Controller
                 'category:id,name,slug',
                 'collections:id,name,slug',
                 'mediaAttachments.asset.variants',
+                'sizeGuide.entries',
                 'variants' => fn ($query) => $query->sellable()->with(['inventoryBalances', 'mediaAttachments.asset.variants']),
             ])
             ->orderByDesc('published_at')
@@ -37,6 +38,7 @@ class CatalogController extends Controller
             'category:id,name,slug',
             'collections:id,name,slug',
             'mediaAttachments.asset.variants',
+            'sizeGuide.entries',
             'variants' => fn ($query) => $query->sellable()->with(['inventoryBalances', 'mediaAttachments.asset.variants']),
         ]);
 
