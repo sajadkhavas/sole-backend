@@ -234,7 +234,7 @@ class ShippingService
                     'reserved' => (int) $balance->reserved - $quantity,
                 ])->save();
             });
-            $reservation->forceFill(['status' => 'committed', 'released_at' => now()])->save();
+            $reservation->forceFill(['status' => 'committed', 'committed_at' => now()])->save();
         }
     }
 
