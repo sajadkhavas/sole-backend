@@ -8,6 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        Schema::table('orders', function (Blueprint $table): void {
+            $table->string('shipping_provider', 40)->nullable()->after('shipping_minor');
+            $table->string('shipping_service_code', 80)->nullable()->after('shipping_provider');
+        });
+
         Schema::create('shipping_quotes', function (Blueprint $table): void {
             $table->id();
             $table->uuid('public_id')->unique();
@@ -128,5 +133,9 @@ return new class extends Migration
         Schema::dropIfExists('payment_reconciliations');
         Schema::dropIfExists('payment_attempts');
         Schema::dropIfExists('shipping_quotes');
+
+        Schema::table('orders', function (Blueprint $table): void {
+            $table->dropColumn(['shipping_provider', 'shipping_service_code']);
+        });
     }
 };
