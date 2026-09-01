@@ -20,7 +20,7 @@ class CatalogController extends Controller
             'q' => ['nullable', 'string', 'max:120'],
             'brand' => ['nullable', 'string', 'max:120'],
             'category' => ['nullable', 'string', 'max:120'],
-            'size' => ['nullable', 'string', 'max:32'],
+            'size' => ['nullable', 'string', 'max:64'],
             'availability' => ['nullable', Rule::in(['all', 'in_stock', 'out_of_stock'])],
             'price_max_minor' => ['nullable', 'integer', 'min:0'],
             'quick' => ['nullable', Rule::in(['all', 'new', 'sale', 'limited'])],
@@ -119,7 +119,16 @@ class CatalogController extends Controller
             $query->whereHas('category', fn (Builder $category) => $category->where('slug', $filters['category']));
         }
         if (! empty($filters['size'])) {
-            $query->whereHas('variants', fn (Builder $variant) => $variant->active()->where('size', $filters['size']));
+            $sizes = collect(explode(',', (string) $filters['size']))
+                ->map(fn (string $size): string => trim($size))
+                ->filter(fn (string $size): bool => $size !== '')
+                ->unique()
+                ->values()
+                ->all();
+
+            if ($sizes !== []) {
+                $query->whereHas('variants', fn (Builder $variant) => $variant->active()->whereIn('size', $sizes));
+            }
         }
         if (isset($filters['price_max_minor'])) {
             $query->whereHas('variants', fn (Builder $variant) => $variant->active()->where('price_minor', '<=', $filters['price_max_minor']));
