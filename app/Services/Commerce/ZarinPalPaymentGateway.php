@@ -21,6 +21,8 @@ class ZarinPalPaymentGateway implements PaymentGateway
     {
         $merchantId = $this->merchantId();
         $callbackUrl = $this->callbackUrl();
+        $separator = str_contains($callbackUrl, '?') ? '&' : '?';
+        $callbackUrl .= $separator.'payment_attempt='.rawurlencode($attempt->public_id);
 
         try {
             $response = Http::acceptJson()
@@ -33,10 +35,6 @@ class ZarinPalPaymentGateway implements PaymentGateway
                     'currency' => $order->currency,
                     'callback_url' => $callbackUrl,
                     'description' => 'SOLE order '.$order->public_id,
-                    'metadata' => [
-                        'order_id' => $order->public_id,
-                        'payment_attempt' => $attempt->public_id,
-                    ],
                 ]);
         } catch (ConnectionException $exception) {
             throw new RuntimeException('Payment provider request timed out.', previous: $exception);
