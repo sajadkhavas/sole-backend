@@ -10,6 +10,7 @@ use App\Models\InventoryBalance;
 use App\Models\InventoryReservation;
 use App\Models\Order;
 use App\Models\OrderEvent;
+use App\Models\ShippingQuote;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -19,19 +20,17 @@ use RuntimeException;
 class CheckoutService
 {
     /** @return array<string, mixed> */
-    public function create(User $user, Cart $cart, CustomerAddress $address, string $idempotencyKey): array
+    public function create(User $user, Cart $cart, CustomerAddress $address, string $idempotencyKey, string $shippingQuoteId): array
     {
-        $fingerprint = hash('sha256', implode(':', [$user->id, $cart->id, $address->id]));
+        $fingerprint = hash('sha256', implode(':', [$user->id, $cart->id, $address->id, $shippingQuoteId]));
 
         try {
-            return DB::transaction(function () use ($user, $cart, $address, $idempotencyKey, $fingerprint): array {
+            return DB::transaction(function () use ($user, $cart, $address, $idempotencyKey, $shippingQuoteId, $fingerprint): array {
                 $existing = CheckoutAttempt::query()->where('idempotency_key', $idempotencyKey)->lockForUpdate()->first();
-
                 if ($existing !== null) {
                     if ($existing->user_id !== $user->id || ! hash_equals($existing->request_fingerprint, $fingerprint)) {
                         throw new RuntimeException('Idempotency key was already used for a different checkout request.');
                     }
-
                     if ($existing->response_payload === null) {
                         throw new RuntimeException('The original checkout request is still processing.');
                     }
@@ -40,17 +39,22 @@ class CheckoutService
                 }
 
                 $lockedCart = Cart::query()->whereKey($cart->id)->lockForUpdate()->firstOrFail();
-
                 if ($lockedCart->status !== 'active' || ($lockedCart->user_id !== null && $lockedCart->user_id !== $user->id)) {
                     throw new RuntimeException('Cart is not available for checkout.');
                 }
-
                 if ($lockedCart->user_id === null) {
                     $lockedCart->forceFill(['user_id' => $user->id])->save();
                 }
-
                 if ($address->user_id !== $user->id) {
                     throw new RuntimeException('Shipping address does not belong to this customer.');
+                }
+
+                $quote = ShippingQuote::query()->where('public_id', $shippingQuoteId)->lockForUpdate()->firstOrFail();
+                if ($quote->user_id !== $user->id || $quote->cart_id !== $lockedCart->id || $quote->customer_address_id !== $address->id) {
+                    throw new RuntimeException('Shipping quote does not belong to this checkout.');
+                }
+                if ($quote->selected_at !== null || $quote->expires_at->isPast()) {
+                    throw new RuntimeException('Shipping quote is no longer valid.');
                 }
 
                 $attempt = CheckoutAttempt::query()->create([
@@ -62,33 +66,27 @@ class CheckoutService
                 ]);
 
                 $items = $lockedCart->items()->with(['variant.product'])->orderBy('product_variant_id')->lockForUpdate()->get();
-
                 if ($items->isEmpty()) {
                     throw new RuntimeException('Cart is empty.');
                 }
 
                 $currencies = $items->pluck('variant.currency')->filter()->unique();
-
-                if ($currencies->count() !== 1) {
-                    throw new RuntimeException('Cart currency is invalid.');
+                if ($currencies->count() !== 1 || strtoupper((string) $currencies->first()) !== strtoupper($quote->currency)) {
+                    throw new RuntimeException('Cart and shipping quote currency do not match.');
                 }
 
                 $policy = BusinessSetting::query()->where('key', 'checkout_policy')->first()?->value;
-
                 if (! is_array($policy)
-                    || ! isset($policy['allowed_country_codes'], $policy['shipping_minor'], $policy['reservation_minutes'])
+                    || ! isset($policy['allowed_country_codes'], $policy['reservation_minutes'])
                     || ! is_array($policy['allowed_country_codes'])) {
                     throw new RuntimeException('Authoritative checkout policy is not configured.');
                 }
-
                 if (! in_array($address->country_code, $policy['allowed_country_codes'], true)) {
                     throw new RuntimeException('Shipping is not eligible for this address.');
                 }
 
-                $shippingMinor = filter_var($policy['shipping_minor'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
                 $reservationMinutes = filter_var($policy['reservation_minutes'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 5, 'max_range' => 60]]);
-
-                if ($shippingMinor === false || $reservationMinutes === false) {
+                if ($reservationMinutes === false) {
                     throw new RuntimeException('Authoritative checkout policy is invalid.');
                 }
 
@@ -101,11 +99,7 @@ class CheckoutService
                     $subtotal += (int) $variant->price_minor * (int) $item->quantity;
                 }
 
-                $freeThreshold = $policy['free_shipping_threshold_minor'] ?? null;
-                if (is_int($freeThreshold) && $subtotal >= $freeThreshold) {
-                    $shippingMinor = 0;
-                }
-
+                $shippingMinor = (int) $quote->amount_minor;
                 $expiresAt = now()->addMinutes($reservationMinutes);
                 $order = Order::query()->create([
                     'public_id' => (string) Str::uuid(),
@@ -116,6 +110,8 @@ class CheckoutService
                     'subtotal_minor' => $subtotal,
                     'discount_minor' => 0,
                     'shipping_minor' => $shippingMinor,
+                    'shipping_provider' => $quote->provider,
+                    'shipping_service_code' => $quote->service_code,
                     'total_minor' => $subtotal + $shippingMinor,
                     'shipping_address_snapshot' => $address->only([
                         'recipient_name', 'phone_e164', 'country_code', 'province', 'city', 'postal_code', 'address_line1', 'address_line2',
@@ -135,7 +131,6 @@ class CheckoutService
                     foreach ($balances as $balance) {
                         $available = max(0, (int) $balance->on_hand - (int) $balance->reserved);
                         $allocated = min($available, $remaining);
-
                         if ($allocated === 0) {
                             continue;
                         }
@@ -177,9 +172,15 @@ class CheckoutService
                     'from_status' => null,
                     'to_status' => 'awaiting_payment',
                     'reason' => 'checkout_created',
+                    'metadata' => [
+                        'shipping_quote_id' => $quote->public_id,
+                        'shipping_provider' => $quote->provider,
+                        'shipping_service_code' => $quote->service_code,
+                    ],
                     'created_at' => now(),
                 ]);
 
+                $quote->forceFill(['selected_at' => now()])->save();
                 $lockedCart->forceFill(['status' => 'converted'])->save();
                 $payload = $this->orderPayload($order->load('items'));
                 $attempt->forceFill(['order_id' => $order->id, 'status' => 'completed', 'response_payload' => $payload])->save();
@@ -202,7 +203,8 @@ class CheckoutService
     /** @return array<string, mixed> */
     public function orderPayload(Order $order): array
     {
-        $order->loadMissing('items');
+        $order->loadMissing(['items', 'paymentAttempts', 'shipment', 'returnRequest', 'refunds']);
+        $latestPayment = $order->paymentAttempts->sortByDesc('id')->first();
 
         return [
             'id' => $order->public_id,
@@ -211,9 +213,31 @@ class CheckoutService
             'subtotal_minor' => $order->subtotal_minor,
             'discount_minor' => $order->discount_minor,
             'shipping_minor' => $order->shipping_minor,
+            'shipping_provider' => $order->shipping_provider,
+            'shipping_service_code' => $order->shipping_service_code,
             'total_minor' => $order->total_minor,
             'reservation_expires_at' => $order->reservation_expires_at?->toISOString(),
             'created_at' => $order->created_at?->toISOString(),
+            'payment' => $latestPayment === null ? null : [
+                'id' => $latestPayment->public_id,
+                'provider' => $latestPayment->provider,
+                'status' => $latestPayment->status,
+                'reference_id' => $latestPayment->status === 'paid' ? $latestPayment->reference_id : null,
+            ],
+            'shipment' => $order->shipment === null ? null : [
+                'id' => $order->shipment->public_id,
+                'status' => $order->shipment->status,
+                'tracking_number' => $order->shipment->tracking_number,
+            ],
+            'return' => $order->returnRequest === null ? null : [
+                'id' => $order->returnRequest->public_id,
+                'status' => $order->returnRequest->status,
+            ],
+            'refunds' => $order->refunds->map(fn ($refund): array => [
+                'id' => $refund->public_id,
+                'status' => $refund->status,
+                'amount_minor' => $refund->amount_minor,
+            ])->values()->all(),
             'items' => $order->items->map(fn ($item): array => [
                 'sku' => $item->sku,
                 'product_name' => $item->product_name,
