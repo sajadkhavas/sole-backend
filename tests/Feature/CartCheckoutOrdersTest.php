@@ -3,12 +3,14 @@
 namespace Tests\Feature;
 
 use App\Models\BusinessSetting;
+use App\Models\Cart;
 use App\Models\CustomerAddress;
 use App\Models\InventoryBalance;
 use App\Models\InventoryLocation;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\ShippingQuote;
 use App\Models\User;
 use App\Services\InventoryLedger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -52,18 +54,22 @@ class CartCheckoutOrdersTest extends TestCase
         $this->withHeader('X-Sole-Cart', $cartToken)
             ->putJson("/api/v1/commerce/cart/items/{$variant->id}", ['quantity' => 2])
             ->assertOk();
+        $quote = $this->shippingQuote($user, $address, $cartToken, 100_000);
 
         $idempotencyKey = (string) Str::uuid();
         $headers = ['X-Sole-Cart' => $cartToken, 'Idempotency-Key' => $idempotencyKey];
-        $first = $this->withHeaders($headers)->postJson('/api/v1/commerce/checkout', ['address_id' => $address->id])
+        $body = ['address_id' => $address->id, 'shipping_quote_id' => $quote->public_id];
+        $first = $this->withHeaders($headers)->postJson('/api/v1/commerce/checkout', $body)
             ->assertCreated()
             ->assertJsonPath('data.status', 'awaiting_payment')
             ->assertJsonPath('data.subtotal_minor', 2_000_000)
             ->assertJsonPath('data.shipping_minor', 100_000)
+            ->assertJsonPath('data.shipping_provider', 'configured')
+            ->assertJsonPath('data.shipping_service_code', 'standard')
             ->assertJsonPath('data.total_minor', 2_100_000);
         $orderId = $first->json('data.id');
 
-        $this->withHeaders($headers)->postJson('/api/v1/commerce/checkout', ['address_id' => $address->id])
+        $this->withHeaders($headers)->postJson('/api/v1/commerce/checkout', $body)
             ->assertCreated()
             ->assertJsonPath('data.id', $orderId);
 
@@ -71,6 +77,7 @@ class CartCheckoutOrdersTest extends TestCase
         $this->assertDatabaseCount('checkout_attempts', 1);
         $this->assertDatabaseHas('inventory_balances', ['id' => $balance->id, 'on_hand' => 3, 'reserved' => 2]);
         $this->assertDatabaseHas('order_events', ['from_status' => null, 'to_status' => 'awaiting_payment']);
+        $this->assertNotNull($quote->refresh()->selected_at);
 
         $this->getJson('/api/v1/commerce/orders')->assertOk()->assertJsonPath('data.0.id', $orderId);
         $this->getJson("/api/v1/commerce/orders/{$orderId}")->assertOk()->assertJsonPath('data.items.0.quantity', 2);
@@ -84,9 +91,10 @@ class CartCheckoutOrdersTest extends TestCase
         $address = $this->address($user);
         $cartToken = $this->actingAs($user)->getJson('/api/v1/commerce/cart')->headers->get('X-Sole-Cart');
         $this->withHeader('X-Sole-Cart', $cartToken)->putJson("/api/v1/commerce/cart/items/{$variant->id}", ['quantity' => 1]);
+        $quote = $this->shippingQuote($user, $address, $cartToken, 100_000);
 
         $this->withHeaders(['X-Sole-Cart' => $cartToken, 'Idempotency-Key' => (string) Str::uuid()])
-            ->postJson('/api/v1/commerce/checkout', ['address_id' => $address->id])
+            ->postJson('/api/v1/commerce/checkout', ['address_id' => $address->id, 'shipping_quote_id' => $quote->public_id])
             ->assertStatus(503);
 
         $order = Order::factory()->for($user)->create();
@@ -101,8 +109,9 @@ class CartCheckoutOrdersTest extends TestCase
         $this->checkoutPolicy();
         $cartToken = $this->actingAs($user)->getJson('/api/v1/commerce/cart')->headers->get('X-Sole-Cart');
         $this->withHeader('X-Sole-Cart', $cartToken)->putJson("/api/v1/commerce/cart/items/{$variant->id}", ['quantity' => 1]);
+        $quote = $this->shippingQuote($user, $address, $cartToken, 100_000);
         $this->withHeaders(['X-Sole-Cart' => $cartToken, 'Idempotency-Key' => (string) Str::uuid()])
-            ->postJson('/api/v1/commerce/checkout', ['address_id' => $address->id])
+            ->postJson('/api/v1/commerce/checkout', ['address_id' => $address->id, 'shipping_quote_id' => $quote->public_id])
             ->assertCreated();
 
         Order::query()->update(['reservation_expires_at' => now()->subMinute()]);
@@ -160,14 +169,32 @@ class CartCheckoutOrdersTest extends TestCase
         ]);
     }
 
+    private function shippingQuote(User $user, CustomerAddress $address, string $cartToken, int $amountMinor): ShippingQuote
+    {
+        $cart = Cart::query()->where('public_id', $cartToken)->firstOrFail();
+
+        return ShippingQuote::query()->create([
+            'public_id' => (string) Str::uuid(),
+            'user_id' => $user->id,
+            'cart_id' => $cart->id,
+            'customer_address_id' => $address->id,
+            'provider' => 'configured',
+            'service_code' => 'standard',
+            'label' => 'Standard shipping',
+            'currency' => 'IRR',
+            'amount_minor' => $amountMinor,
+            'eta_min_days' => 2,
+            'eta_max_days' => 4,
+            'expires_at' => now()->addMinutes(15),
+        ]);
+    }
+
     private function checkoutPolicy(): void
     {
         BusinessSetting::query()->create([
             'key' => 'checkout_policy',
             'value' => [
                 'allowed_country_codes' => ['IR'],
-                'shipping_minor' => 100_000,
-                'free_shipping_threshold_minor' => 5_000_000,
                 'reservation_minutes' => 15,
             ],
         ]);
