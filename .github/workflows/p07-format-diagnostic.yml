@@ -1,0 +1,42 @@
+name: P07 Pint diagnostic
+
+on:
+  push:
+    branches:
+      - "phase/sole-p07-payment-shipping-returns"
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup PHP 8.5
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          coverage: none
+      - name: Install locked dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+      - name: Apply Pint exactly
+        run: vendor/bin/pint
+      - name: Capture formatted files
+        run: |
+          mkdir -p artifacts/formatted
+          git diff --name-only -- '*.php' | while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            mkdir -p "artifacts/formatted/$(dirname "$file")"
+            cp "$file" "artifacts/formatted/$file"
+          done
+          git diff --name-only -- '*.php' > artifacts/formatted-files.txt
+      - name: Upload formatter evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: p07-pint-formatted
+          path: artifacts
+          if-no-files-found: error
