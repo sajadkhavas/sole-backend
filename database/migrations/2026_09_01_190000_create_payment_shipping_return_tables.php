@@ -12,6 +12,9 @@ return new class extends Migration
             $table->string('shipping_provider', 40)->nullable()->after('shipping_minor');
             $table->string('shipping_service_code', 80)->nullable()->after('shipping_provider');
         });
+        Schema::table('inventory_reservations', function (Blueprint $table): void {
+            $table->timestamp('committed_at')->nullable()->after('released_at');
+        });
 
         Schema::create('shipping_quotes', function (Blueprint $table): void {
             $table->id();
@@ -134,6 +137,9 @@ return new class extends Migration
         Schema::dropIfExists('payment_attempts');
         Schema::dropIfExists('shipping_quotes');
 
+        Schema::table('inventory_reservations', function (Blueprint $table): void {
+            $table->dropColumn('committed_at');
+        });
         Schema::table('orders', function (Blueprint $table): void {
             $table->dropColumn(['shipping_provider', 'shipping_service_code']);
         });
