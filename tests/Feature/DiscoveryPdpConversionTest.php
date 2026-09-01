@@ -56,6 +56,7 @@ class DiscoveryPdpConversionTest extends TestCase
         $this->getJson('/api/v1/catalog/products?availability=in_stock')->assertJsonCount(1, 'data');
         $this->getJson('/api/v1/catalog/products?availability=out_of_stock')->assertJsonCount(1, 'data');
         $this->getJson('/api/v1/catalog/products?size=42')->assertJsonCount(1, 'data');
+        $this->getJson('/api/v1/catalog/products?size=42,43')->assertJsonCount(2, 'data');
         $this->getJson('/api/v1/catalog/products?price_max_minor=1000000')->assertJsonPath('data.0.name', 'Beta Runner');
     }
 
