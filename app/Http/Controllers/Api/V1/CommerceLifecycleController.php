@@ -24,9 +24,10 @@ class CommerceLifecycleController extends Controller
         $data = $request->validate(['address_id' => ['required', 'integer']]);
         $user = $request->user();
         $address = CustomerAddress::query()->where('user_id', $user->id)->findOrFail($data['address_id']);
-        $cart = $this->requiredCart($request, $user->id);
 
         try {
+            $cart = $this->requiredCart($request, $user->id);
+
             return response()->json(['data' => $shipping->quotes($user, $cart, $address)]);
         } catch (RuntimeException $exception) {
             return response()->json(['message' => $exception->getMessage()], 409);
