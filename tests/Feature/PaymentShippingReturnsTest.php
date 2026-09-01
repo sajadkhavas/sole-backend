@@ -4,10 +4,10 @@ namespace Tests\Feature;
 
 use App\Contracts\PaymentGateway;
 use App\Models\BusinessSetting;
+use App\Models\CustomerAddress;
 use App\Models\InventoryBalance;
 use App\Models\InventoryLocation;
 use App\Models\Order;
-use App\Models\PaymentAttempt;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Shipment;
@@ -191,7 +191,7 @@ class PaymentShippingReturnsTest extends TestCase
         $this->assertDatabaseMissing('shipment_events', ['event_key' => 'bad-signature-event']);
     }
 
-    /** @return array{User, \App\Models\CustomerAddress, string, InventoryBalance, Order} */
+    /** @return array{User, CustomerAddress, string, InventoryBalance, Order} */
     private function checkoutOrder(int $quantity = 2, int $stock = 3): array
     {
         $user = User::factory()->create();
