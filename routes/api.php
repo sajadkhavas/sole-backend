@@ -24,7 +24,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::put('/commerce/cart/items/{variant}', [CommerceController::class, 'putItem'])->middleware('throttle:120,1')->name('commerce.cart.items.put');
     Route::delete('/commerce/cart/items/{variant}', [CommerceController::class, 'deleteItem'])->middleware('throttle:120,1')->name('commerce.cart.items.delete');
     Route::post('/commerce/shipping/provider-events', [CommerceLifecycleController::class, 'shippingWebhook'])
-        ->middleware('throttle:120,1')
+        ->middleware('throttle:p07-shipping-webhook')
         ->name('commerce.shipping.provider-events');
 
     Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function (): void {
@@ -47,15 +47,15 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::delete('/customer/deletion', [CustomerAccountController::class, 'cancelDeletion'])->name('customer.deletion.cancel');
         Route::put('/catalog/products/{product:slug}/fit/feedback', [SizeFitController::class, 'feedback'])->name('fit.feedback');
 
-        Route::post('/commerce/shipping/quotes', [CommerceLifecycleController::class, 'shippingQuotes'])->middleware('throttle:30,1')->name('commerce.shipping.quotes');
-        Route::post('/commerce/checkout', [CommerceController::class, 'checkout'])->middleware('throttle:20,1')->name('commerce.checkout.create');
+        Route::post('/commerce/shipping/quotes', [CommerceLifecycleController::class, 'shippingQuotes'])->middleware('throttle:p07-shipping-quotes')->name('commerce.shipping.quotes');
+        Route::post('/commerce/checkout', [CommerceController::class, 'checkout'])->middleware('throttle:p07-checkout')->name('commerce.checkout.create');
         Route::get('/commerce/orders', [CommerceController::class, 'orders'])->name('commerce.orders.index');
         Route::get('/commerce/orders/{order}', [CommerceController::class, 'order'])->name('commerce.orders.show');
-        Route::post('/commerce/orders/{order}/payments', [CommerceLifecycleController::class, 'initiatePayment'])->middleware('throttle:20,1')->name('commerce.payments.initiate');
-        Route::post('/commerce/payments/{payment}/verify', [CommerceLifecycleController::class, 'verifyPayment'])->middleware('throttle:30,1')->name('commerce.payments.verify');
-        Route::post('/commerce/payments/{payment}/reconcile', [CommerceLifecycleController::class, 'reconcilePayment'])->middleware('throttle:10,1')->name('commerce.payments.reconcile');
-        Route::post('/commerce/orders/{order}/returns', [CommerceLifecycleController::class, 'requestReturn'])->middleware('throttle:10,1')->name('commerce.returns.request');
-        Route::post('/commerce/orders/{order}/refunds', [CommerceLifecycleController::class, 'requestRefund'])->middleware('throttle:10,1')->name('commerce.refunds.request');
+        Route::post('/commerce/orders/{order}/payments', [CommerceLifecycleController::class, 'initiatePayment'])->middleware('throttle:p07-payment-start')->name('commerce.payments.initiate');
+        Route::post('/commerce/payments/{payment}/verify', [CommerceLifecycleController::class, 'verifyPayment'])->middleware('throttle:p07-payment-verify')->name('commerce.payments.verify');
+        Route::post('/commerce/payments/{payment}/reconcile', [CommerceLifecycleController::class, 'reconcilePayment'])->middleware('throttle:p07-payment-reconcile')->name('commerce.payments.reconcile');
+        Route::post('/commerce/orders/{order}/returns', [CommerceLifecycleController::class, 'requestReturn'])->middleware('throttle:p07-return')->name('commerce.returns.request');
+        Route::post('/commerce/orders/{order}/refunds', [CommerceLifecycleController::class, 'requestRefund'])->middleware('throttle:p07-refund')->name('commerce.refunds.request');
 
         Route::post('/customer/otp', [OtpController::class, 'request'])
             ->middleware('throttle:20,1')
