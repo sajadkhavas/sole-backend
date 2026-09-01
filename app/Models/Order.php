@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use LogicException;
 
 class Order extends Model
@@ -17,7 +18,21 @@ class Order extends Model
 
     protected static bool $stateMutationAllowed = false;
 
-    protected $fillable = ['public_id', 'user_id', 'customer_address_id', 'status', 'currency', 'subtotal_minor', 'discount_minor', 'shipping_minor', 'total_minor', 'shipping_address_snapshot', 'reservation_expires_at'];
+    protected $fillable = [
+        'public_id',
+        'user_id',
+        'customer_address_id',
+        'status',
+        'currency',
+        'subtotal_minor',
+        'discount_minor',
+        'shipping_minor',
+        'shipping_provider',
+        'shipping_service_code',
+        'total_minor',
+        'shipping_address_snapshot',
+        'reservation_expires_at',
+    ];
 
     protected function casts(): array
     {
@@ -70,5 +85,30 @@ class Order extends Model
     public function reservations(): HasMany
     {
         return $this->hasMany(InventoryReservation::class);
+    }
+
+    public function paymentAttempts(): HasMany
+    {
+        return $this->hasMany(PaymentAttempt::class);
+    }
+
+    public function paymentReconciliations(): HasMany
+    {
+        return $this->hasMany(PaymentReconciliation::class);
+    }
+
+    public function shipment(): HasOne
+    {
+        return $this->hasOne(Shipment::class);
+    }
+
+    public function returnRequest(): HasOne
+    {
+        return $this->hasOne(ReturnRequest::class);
+    }
+
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(RefundRequest::class);
     }
 }
