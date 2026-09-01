@@ -16,10 +16,14 @@ class SizeRecommendationService
         }
 
         $nearest = $entries->sortBy(fn ($entry) => min(abs($footLengthMm - $entry->foot_length_min_mm), abs($footLengthMm - $entry->foot_length_max_mm)))->first();
-        if (! $nearest) return $this->result(null, 'unavailable', 'no_verified_size_data');
+        if (! $nearest) {
+            return $this->result(null, 'unavailable', 'no_verified_size_data');
+        }
 
         $distance = min(abs($footLengthMm - $nearest->foot_length_min_mm), abs($footLengthMm - $nearest->foot_length_max_mm));
-        if ($distance > 5) return $this->result(null, 'low', 'measurement_outside_supported_range');
+        if ($distance > 5) {
+            return $this->result(null, 'low', 'measurement_outside_supported_range');
+        }
 
         return $this->result($nearest->eu_size, 'low', 'nearest_range_boundary');
     }

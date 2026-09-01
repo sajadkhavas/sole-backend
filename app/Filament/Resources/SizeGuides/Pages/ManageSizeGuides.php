@@ -9,5 +9,9 @@ use Filament\Resources\Pages\ManageRecords;
 class ManageSizeGuides extends ManageRecords
 {
     protected static string $resource = SizeGuideResource::class;
-    protected function getHeaderActions(): array { return [CreateAction::make()]; }
+
+    protected function getHeaderActions(): array
+    {
+        return [CreateAction::make()];
+    }
 }

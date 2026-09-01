@@ -50,6 +50,7 @@ class SizeFitIntelligenceTest extends TestCase
 
         $this->assertDatabaseCount('fit_events', 1);
         $event = (array) $this->getConnection()->table('fit_events')->first();
+
         $this->assertArrayNotHasKey('foot_length_mm', $event);
     }
 
@@ -90,6 +91,7 @@ class SizeFitIntelligenceTest extends TestCase
         $product = Product::factory()->published()->create(['slug' => $slug, 'brand' => 'SOLE Test']);
         $variant = ProductVariant::factory()->for($product)->create(['sku' => strtoupper($slug).'-42', 'size' => '42']);
         app(InventoryLedger::class)->adjust($variant, $location, 5, 'P04 fixture');
+
         return [$product, $variant];
     }
 
@@ -109,6 +111,7 @@ class SizeFitIntelligenceTest extends TestCase
             ['eu_size' => 42, 'foot_length_min_mm' => 253, 'foot_length_max_mm' => 258],
             ['eu_size' => 43, 'foot_length_min_mm' => 259, 'foot_length_max_mm' => 264],
         ]);
+
         return $guide;
     }
 }

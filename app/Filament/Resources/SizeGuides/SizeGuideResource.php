@@ -17,6 +17,7 @@ use Filament\Tables\Table;
 class SizeGuideResource extends Resource
 {
     protected static ?string $model = SizeGuide::class;
+
     protected static ?string $recordTitleAttribute = 'source_label';
 
     public static function form(Schema $schema): Schema
@@ -47,5 +48,8 @@ class SizeGuideResource extends Resource
         ])->recordActions([EditAction::make()]);
     }
 
-    public static function getPages(): array { return ['index' => ManageSizeGuides::route('/')]; }
+    public static function getPages(): array
+    {
+        return ['index' => ManageSizeGuides::route('/')];
+    }
 }

@@ -36,7 +36,10 @@ class CatalogProductResource extends JsonResource
                 'media' => $variant->relationLoaded('mediaAttachments') ? $variant->mediaAttachments->filter(fn ($attachment) => $attachment->asset?->status === 'ready')->map(fn ($attachment) => $this->media($attachment))->values() : [],
             ])->values()),
             'size_guide' => $this->whenLoaded('sizeGuide', function () {
-                if (! $this->sizeGuide || $this->sizeGuide->status !== 'published') return null;
+                if (! $this->sizeGuide || $this->sizeGuide->status !== 'published') {
+                    return null;
+                }
+
                 return [
                     'source_label' => $this->sizeGuide->source_label,
                     'source_url' => $this->sizeGuide->source_url,

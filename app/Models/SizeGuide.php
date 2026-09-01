@@ -15,6 +15,13 @@ class SizeGuide extends Model
         return ['verified_at' => 'datetime'];
     }
 
-    public function product(): BelongsTo { return $this->belongsTo(Product::class); }
-    public function entries(): HasMany { return $this->hasMany(SizeGuideEntry::class)->orderBy('eu_size'); }
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    public function entries(): HasMany
+    {
+        return $this->hasMany(SizeGuideEntry::class)->orderBy('eu_size');
+    }
 }
