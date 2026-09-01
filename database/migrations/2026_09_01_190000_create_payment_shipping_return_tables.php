@@ -61,7 +61,7 @@ return new class extends Migration
             $table->foreignId('payment_attempt_id')->nullable()->constrained()->nullOnDelete();
             $table->string('expected_status', 40);
             $table->string('observed_status', 40);
-            $table->string('outcome', 40)->index();
+            $table->string('outcome', 80)->index();
             $table->char('payload_hash', 64)->nullable();
             $table->timestamp('reconciled_at');
             $table->timestamps();
