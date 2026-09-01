@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\BackInStockController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CustomerAccountController;
 use App\Http\Controllers\Api\V1\OtpController;
@@ -13,6 +14,8 @@ Route::get('/ready', ReadinessController::class)->name('api.ready');
 Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::get('/catalog/products', [CatalogController::class, 'index'])->name('catalog.products.index');
     Route::get('/catalog/products/{product:slug}', [CatalogController::class, 'show'])->name('catalog.products.show');
+    Route::get('/catalog/products/{product:slug}/related', [CatalogController::class, 'related'])->name('catalog.products.related');
+    Route::post('/catalog/products/{product:slug}/back-in-stock', [BackInStockController::class, 'store'])->middleware('throttle:10,1')->name('catalog.products.back-in-stock');
     Route::post('/catalog/products/{product:slug}/fit/recommendation', [SizeFitController::class, 'recommend'])->middleware('throttle:30,1')->name('fit.recommend');
     Route::post('/catalog/products/{product:slug}/fit/events', [SizeFitController::class, 'event'])->middleware('throttle:60,1')->name('fit.events');
 
