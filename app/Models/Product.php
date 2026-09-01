@@ -16,11 +16,11 @@ class Product extends Model
     /** @use HasFactory<ProductFactory> */
     use HasFactory;
 
-    protected $fillable = ['category_id', 'name', 'slug', 'description', 'brand', 'colorway', 'tags', 'status', 'published_at'];
+    protected $fillable = ['category_id', 'name', 'slug', 'description', 'brand', 'colorway', 'tags', 'status', 'published_at', 'merchandising_priority'];
 
     protected function casts(): array
     {
-        return ['published_at' => 'datetime', 'tags' => 'array'];
+        return ['published_at' => 'datetime', 'tags' => 'array', 'merchandising_priority' => 'integer'];
     }
 
     public function category(): BelongsTo

@@ -30,6 +30,11 @@ class ProductResource extends Resource
             TextInput::make('slug')->required()->maxLength(255)->unique(ignoreRecord: true),
             TextInput::make('brand')->required()->maxLength(120),
             TextInput::make('colorway')->maxLength(160),
+            TextInput::make('merchandising_priority')
+                ->label('Merchandising priority')
+                ->numeric()
+                ->default(0)
+                ->helperText('Explicit ranking control only. Never present this value as popularity or scarcity.'),
             TagsInput::make('tags')->columnSpanFull(),
             Select::make('category_id')->relationship('category', 'name')->searchable()->preload(),
             Select::make('collections')->relationship('collections', 'name')->multiple()->searchable()->preload(),
@@ -45,6 +50,7 @@ class ProductResource extends Resource
                 TextColumn::make('brand')->searchable()->sortable(),
                 TextColumn::make('slug')->searchable(),
                 TextColumn::make('category.name')->label('Category')->sortable(),
+                TextColumn::make('merchandising_priority')->label('Priority')->numeric()->sortable(),
                 TextColumn::make('status')->badge()->sortable(),
                 TextColumn::make('published_at')->dateTime()->sortable(),
             ])

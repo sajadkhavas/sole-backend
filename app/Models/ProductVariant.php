@@ -36,8 +36,18 @@ class ProductVariant extends Model
         return $this->hasMany(MediaAttachment::class, 'subject_id')->where('subject_type', 'variant');
     }
 
+    public function backInStockIntents(): HasMany
+    {
+        return $this->hasMany(BackInStockIntent::class);
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
+
     public function scopeSellable(Builder $query): Builder
     {
-        return $query->where('is_active', true)->whereHas('inventoryBalances', fn (Builder $balance) => $balance->whereColumn('on_hand', '>', 'reserved'));
+        return $query->active()->whereHas('inventoryBalances', fn (Builder $balance) => $balance->whereColumn('on_hand', '>', 'reserved'));
     }
 }
