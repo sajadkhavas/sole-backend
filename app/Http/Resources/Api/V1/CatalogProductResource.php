@@ -35,6 +35,22 @@ class CatalogProductResource extends JsonResource
                 'available_quantity' => (int) $variant->inventoryBalances->sum(fn ($balance) => max(0, (int) $balance->on_hand - (int) $balance->reserved)),
                 'media' => $variant->relationLoaded('mediaAttachments') ? $variant->mediaAttachments->filter(fn ($attachment) => $attachment->asset?->status === 'ready')->map(fn ($attachment) => $this->media($attachment))->values() : [],
             ])->values()),
+            'size_guide' => $this->whenLoaded('sizeGuide', function () {
+                if (! $this->sizeGuide || $this->sizeGuide->status !== 'published') return null;
+                return [
+                    'source_label' => $this->sizeGuide->source_label,
+                    'source_url' => $this->sizeGuide->source_url,
+                    'measurement_unit' => $this->sizeGuide->measurement_unit,
+                    'width_profile' => $this->sizeGuide->width_profile,
+                    'verified_at' => $this->sizeGuide->verified_at?->toAtomString(),
+                    'entries' => $this->sizeGuide->entries->map(fn ($entry) => [
+                        'eu_size' => (string) $entry->eu_size,
+                        'foot_length_min_mm' => (int) $entry->foot_length_min_mm,
+                        'foot_length_max_mm' => (int) $entry->foot_length_max_mm,
+                        'label' => $entry->label,
+                    ])->values(),
+                ];
+            }),
         ];
     }
 

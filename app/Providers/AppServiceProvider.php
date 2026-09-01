@@ -12,6 +12,7 @@ use App\Models\InventoryLocation;
 use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\SizeGuide;
 use App\Models\User;
 use App\Observers\AuditableObserver;
 use App\Policies\AuditLogPolicy;
@@ -46,6 +47,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Collection::class, CollectionPolicy::class);
         Gate::policy(Product::class, ProductPolicy::class);
         Gate::policy(ProductVariant::class, ProductVariantPolicy::class);
+        Gate::policy(SizeGuide::class, ProductPolicy::class);
         Gate::policy(InventoryLocation::class, InventoryLocationPolicy::class);
         Gate::policy(InventoryMovement::class, InventoryMovementPolicy::class);
         Gate::policy(BusinessSetting::class, BusinessSettingPolicy::class);
@@ -57,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
             Collection::class,
             Product::class,
             ProductVariant::class,
+            SizeGuide::class,
             InventoryLocation::class,
             BusinessSetting::class,
         ] as $model) {

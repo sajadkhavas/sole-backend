@@ -37,6 +37,11 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
+    public function sizeGuide(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(SizeGuide::class);
+    }
+
     public function mediaAttachments(): HasMany
     {
         return $this->hasMany(MediaAttachment::class, 'subject_id')->where('subject_type', 'product');

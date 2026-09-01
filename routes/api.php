@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CustomerAccountController;
 use App\Http\Controllers\Api\V1\OtpController;
 use App\Http\Controllers\Api\V1\ReadinessController;
+use App\Http\Controllers\Api\V1\SizeFitController;
 use App\Http\Controllers\Auth\CustomerAuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +13,8 @@ Route::get('/ready', ReadinessController::class)->name('api.ready');
 Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::get('/catalog/products', [CatalogController::class, 'index'])->name('catalog.products.index');
     Route::get('/catalog/products/{product:slug}', [CatalogController::class, 'show'])->name('catalog.products.show');
+    Route::post('/catalog/products/{product:slug}/fit/recommendation', [SizeFitController::class, 'recommend'])->middleware('throttle:30,1')->name('fit.recommend');
+    Route::post('/catalog/products/{product:slug}/fit/events', [SizeFitController::class, 'event'])->middleware('throttle:60,1')->name('fit.events');
 
     Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function (): void {
         Route::get('/auth/me', [CustomerAuthController::class, 'me'])->name('auth.me');
@@ -31,6 +34,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::get('/customer/export', [CustomerAccountController::class, 'export'])->name('customer.export');
         Route::post('/customer/deletion', [CustomerAccountController::class, 'requestDeletion'])->name('customer.deletion.request');
         Route::delete('/customer/deletion', [CustomerAccountController::class, 'cancelDeletion'])->name('customer.deletion.cancel');
+        Route::put('/catalog/products/{product:slug}/fit/feedback', [SizeFitController::class, 'feedback'])->name('fit.feedback');
 
         Route::post('/customer/otp', [OtpController::class, 'request'])
             ->middleware('throttle:20,1')
