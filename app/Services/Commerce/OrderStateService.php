@@ -10,7 +10,7 @@ use RuntimeException;
 
 class OrderStateService
 {
-    public function transition(Order $order, string $toStatus, string $reason): Order
+    public function transition(Order $order, string $toStatus, string $reason, array $metadata = []): Order
     {
         $allowed = [
             'awaiting_payment' => ['cancelled', 'expired', 'paid'],
@@ -21,12 +21,16 @@ class OrderStateService
             'expired' => [],
         ];
 
-        return DB::transaction(function () use ($order, $toStatus, $reason, $allowed): Order {
-            $locked = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
+        return DB::transaction(function () use ($order, $toStatus, $reason, $metadata, $allowed): Order {
+            $locked = Order::query()->whereKey($order->id)->with('shipment')->lockForUpdate()->firstOrFail();
             $fromStatus = $locked->status;
 
             if (! in_array($toStatus, $allowed[$fromStatus] ?? [], true)) {
                 throw new RuntimeException("Invalid order transition from {$fromStatus} to {$toStatus}.");
+            }
+
+            if ($toStatus === 'cancelled' && in_array($locked->shipment?->status, ['shipped', 'delivered'], true)) {
+                throw new RuntimeException('A dispatched order cannot be cancelled; use the return workflow.');
             }
 
             if (in_array($toStatus, ['cancelled', 'expired'], true)) {
@@ -57,6 +61,7 @@ class OrderStateService
                 'from_status' => $fromStatus,
                 'to_status' => $toStatus,
                 'reason' => $reason,
+                'metadata' => $metadata ?: null,
                 'created_at' => now(),
             ]);
 

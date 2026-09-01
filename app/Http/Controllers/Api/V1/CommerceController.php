@@ -56,7 +56,10 @@ class CommerceController extends Controller
 
     public function checkout(Request $request, CheckoutService $checkout): JsonResponse
     {
-        $data = $request->validate(['address_id' => ['required', 'integer']]);
+        $data = $request->validate([
+            'address_id' => ['required', 'integer'],
+            'shipping_quote_id' => ['required', 'uuid'],
+        ]);
         $idempotencyKey = $request->header('Idempotency-Key');
 
         if (! is_string($idempotencyKey) || ! Validator::make(['key' => $idempotencyKey], ['key' => ['required', 'uuid']])->passes()) {
@@ -67,7 +70,13 @@ class CommerceController extends Controller
         $address = CustomerAddress::query()->where('user_id', $user->id)->findOrFail($data['address_id']);
 
         try {
-            $payload = $checkout->create($user, $this->requiredCart($request, allowConverted: true), $address, $idempotencyKey);
+            $payload = $checkout->create(
+                $user,
+                $this->requiredCart($request, allowConverted: true),
+                $address,
+                $idempotencyKey,
+                $data['shipping_quote_id'],
+            );
 
             return response()->json(['data' => $payload], 201);
         } catch (RuntimeException $exception) {
@@ -81,7 +90,7 @@ class CommerceController extends Controller
     {
         $orders = Order::query()
             ->where('user_id', $request->user()->id)
-            ->with('items')
+            ->with(['items', 'paymentAttempts', 'shipment', 'returnRequest', 'refunds'])
             ->latest('id')
             ->paginate(min(50, max(1, $request->integer('per_page', 20))));
 
@@ -96,7 +105,7 @@ class CommerceController extends Controller
         $model = Order::query()
             ->where('user_id', $request->user()->id)
             ->where('public_id', $order)
-            ->with('items')
+            ->with(['items', 'paymentAttempts', 'shipment', 'returnRequest', 'refunds'])
             ->firstOrFail();
 
         return response()->json(['data' => $checkout->orderPayload($model)]);

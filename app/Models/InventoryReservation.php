@@ -12,11 +12,16 @@ class InventoryReservation extends Model
     /** @use HasFactory<InventoryReservationFactory> */
     use HasFactory;
 
-    protected $fillable = ['order_id', 'product_variant_id', 'inventory_location_id', 'quantity', 'status', 'expires_at', 'released_at'];
+    protected $fillable = ['order_id', 'product_variant_id', 'inventory_location_id', 'quantity', 'status', 'expires_at', 'released_at', 'committed_at'];
 
     protected function casts(): array
     {
-        return ['quantity' => 'integer', 'expires_at' => 'datetime', 'released_at' => 'datetime'];
+        return [
+            'quantity' => 'integer',
+            'expires_at' => 'datetime',
+            'released_at' => 'datetime',
+            'committed_at' => 'datetime',
+        ];
     }
 
     public function order(): BelongsTo
