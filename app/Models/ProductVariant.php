@@ -41,6 +41,11 @@ class ProductVariant extends Model
         return $this->hasMany(BackInStockIntent::class);
     }
 
+    public function cartItems(): HasMany
+    {
+        return $this->hasMany(CartItem::class);
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

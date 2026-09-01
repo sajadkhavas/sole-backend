@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\BackInStockController;
 use App\Http\Controllers\Api\V1\CatalogController;
+use App\Http\Controllers\Api\V1\CommerceController;
 use App\Http\Controllers\Api\V1\CustomerAccountController;
 use App\Http\Controllers\Api\V1\OtpController;
 use App\Http\Controllers\Api\V1\ReadinessController;
@@ -18,6 +19,9 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::post('/catalog/products/{product:slug}/back-in-stock', [BackInStockController::class, 'store'])->middleware('throttle:10,1')->name('catalog.products.back-in-stock');
     Route::post('/catalog/products/{product:slug}/fit/recommendation', [SizeFitController::class, 'recommend'])->middleware('throttle:30,1')->name('fit.recommend');
     Route::post('/catalog/products/{product:slug}/fit/events', [SizeFitController::class, 'event'])->middleware('throttle:60,1')->name('fit.events');
+    Route::get('/commerce/cart', [CommerceController::class, 'cart'])->middleware('throttle:120,1')->name('commerce.cart.show');
+    Route::put('/commerce/cart/items/{variant}', [CommerceController::class, 'putItem'])->middleware('throttle:120,1')->name('commerce.cart.items.put');
+    Route::delete('/commerce/cart/items/{variant}', [CommerceController::class, 'deleteItem'])->middleware('throttle:120,1')->name('commerce.cart.items.delete');
 
     Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function (): void {
         Route::get('/auth/me', [CustomerAuthController::class, 'me'])->name('auth.me');
@@ -38,6 +42,9 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('/customer/deletion', [CustomerAccountController::class, 'requestDeletion'])->name('customer.deletion.request');
         Route::delete('/customer/deletion', [CustomerAccountController::class, 'cancelDeletion'])->name('customer.deletion.cancel');
         Route::put('/catalog/products/{product:slug}/fit/feedback', [SizeFitController::class, 'feedback'])->name('fit.feedback');
+        Route::post('/commerce/checkout', [CommerceController::class, 'checkout'])->middleware('throttle:20,1')->name('commerce.checkout.create');
+        Route::get('/commerce/orders', [CommerceController::class, 'orders'])->name('commerce.orders.index');
+        Route::get('/commerce/orders/{order}', [CommerceController::class, 'order'])->name('commerce.orders.show');
 
         Route::post('/customer/otp', [OtpController::class, 'request'])
             ->middleware('throttle:20,1')

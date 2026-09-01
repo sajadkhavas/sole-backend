@@ -1,0 +1,153 @@
+openapi: 3.1.0
+info:
+  title: SOLE Commerce API
+  version: 1.0.0
+  description: Server-authoritative P06 cart, checkout and customer order contract. Payment is deferred to P07.
+paths:
+  /api/v1/commerce/cart:
+    get:
+      summary: Resolve or create the active capability-scoped cart
+      parameters:
+        - $ref: '#/components/parameters/CartToken'
+      responses:
+        '200':
+          description: Authoritative cart
+          headers:
+            X-Sole-Cart:
+              schema: { type: string, format: uuid }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartEnvelope' }
+  /api/v1/commerce/cart/items/{variant}:
+    put:
+      summary: Set authoritative variant quantity
+      parameters:
+        - $ref: '#/components/parameters/CartToken'
+        - name: variant
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [quantity]
+              properties:
+                quantity: { type: integer, minimum: 1, maximum: 99 }
+      responses:
+        '200':
+          description: Updated cart
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartEnvelope' }
+        '409': { description: Variant, quantity or inventory conflict }
+    delete:
+      summary: Remove a variant from the cart
+      parameters:
+        - $ref: '#/components/parameters/CartToken'
+        - name: variant
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Updated cart
+  /api/v1/commerce/checkout:
+    post:
+      summary: Idempotently create an awaiting-payment order and inventory reservation
+      security: [{ sanctum: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CartToken'
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [address_id]
+              properties:
+                address_id: { type: integer, minimum: 1 }
+      responses:
+        '201':
+          description: Original or replayed order result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderEnvelope' }
+        '409': { description: Cart, inventory or idempotency conflict }
+        '503': { description: Authoritative checkout policy unavailable }
+  /api/v1/commerce/orders:
+    get:
+      summary: List authenticated customer's orders
+      security: [{ sanctum: [] }]
+      responses:
+        '200': { description: Customer-scoped order list }
+  /api/v1/commerce/orders/{order}:
+    get:
+      summary: Get an authenticated customer's order
+      security: [{ sanctum: [] }]
+      parameters:
+        - name: order
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Customer-scoped order
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderEnvelope' }
+        '404': { description: Missing or not owned by customer }
+components:
+  securitySchemes:
+    sanctum:
+      type: apiKey
+      in: cookie
+      name: sole_session
+  parameters:
+    CartToken:
+      name: X-Sole-Cart
+      in: header
+      required: false
+      schema: { type: string, format: uuid }
+  schemas:
+    CartEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [id, status, items, summary]
+          properties:
+            id: { type: string, format: uuid }
+            status: { type: string, enum: [active] }
+            items: { type: array, items: { type: object } }
+            summary:
+              type: object
+              required: [subtotal_minor, currency, checkout_ready]
+              properties:
+                subtotal_minor: { type: integer, minimum: 0 }
+                currency: { type: string, minLength: 3, maxLength: 3 }
+                checkout_ready: { type: boolean }
+    OrderEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [id, status, currency, subtotal_minor, discount_minor, shipping_minor, total_minor, items]
+          properties:
+            id: { type: string, format: uuid }
+            status: { type: string, enum: [awaiting_payment, paid, processing, fulfilled, cancelled, expired] }
+            currency: { type: string, minLength: 3, maxLength: 3 }
+            subtotal_minor: { type: integer, minimum: 0 }
+            discount_minor: { type: integer, minimum: 0 }
+            shipping_minor: { type: integer, minimum: 0 }
+            total_minor: { type: integer, minimum: 0 }
+            reservation_expires_at: { type: [string, 'null'], format: date-time }
+            items: { type: array, items: { type: object } }

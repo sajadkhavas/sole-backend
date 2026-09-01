@@ -62,6 +62,16 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(CustomerAddress::class);
     }
 
+    public function carts(): HasMany
+    {
+        return $this->hasMany(Cart::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
     public function hasPermission(string $permission): bool
     {
         if (! $this->is_active) {
