@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CommerceController;
 use App\Http\Controllers\Api\V1\CommerceLifecycleController;
 use App\Http\Controllers\Api\V1\CustomerAccountController;
+use App\Http\Controllers\Api\V1\EngagementController;
 use App\Http\Controllers\Api\V1\OtpController;
 use App\Http\Controllers\Api\V1\ReadinessController;
 use App\Http\Controllers\Api\V1\SizeFitController;
@@ -19,6 +20,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::get('/catalog/products/{product:slug}', [CatalogController::class, 'show'])->name('catalog.products.show');
     Route::get('/catalog/products/{product:slug}/related', [CatalogController::class, 'related'])->name('catalog.products.related');
     Route::post('/catalog/products/{product:slug}/back-in-stock', [BackInStockController::class, 'store'])->middleware('throttle:10,1')->name('catalog.products.back-in-stock');
+    Route::delete('/catalog/back-in-stock/{intent}', [BackInStockController::class, 'destroy'])->middleware('throttle:10,1')->name('catalog.back-in-stock.destroy');
     Route::post('/catalog/products/{product:slug}/fit/recommendation', [SizeFitController::class, 'recommend'])->middleware('throttle:30,1')->name('fit.recommend');
     Route::post('/catalog/products/{product:slug}/fit/events', [SizeFitController::class, 'event'])->middleware('throttle:60,1')->name('fit.events');
     Route::get('/commerce/cart', [CommerceController::class, 'cart'])->middleware('throttle:120,1')->name('commerce.cart.show');
@@ -48,6 +50,16 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('/customer/deletion', [CustomerAccountController::class, 'requestDeletion'])->name('customer.deletion.request');
         Route::delete('/customer/deletion', [CustomerAccountController::class, 'cancelDeletion'])->name('customer.deletion.cancel');
         Route::put('/catalog/products/{product:slug}/fit/feedback', [SizeFitController::class, 'feedback'])->name('fit.feedback');
+
+        Route::get('/customer/wishlist', [EngagementController::class, 'wishlist'])->name('customer.wishlist.index');
+        Route::put('/customer/wishlist/{variant}', [EngagementController::class, 'addWishlist'])->name('customer.wishlist.store');
+        Route::delete('/customer/wishlist/{variant}', [EngagementController::class, 'removeWishlist'])->name('customer.wishlist.destroy');
+        Route::post('/customer/wishlist/migrate', [EngagementController::class, 'migrateWishlist'])->name('customer.wishlist.migrate');
+        Route::get('/customer/notification-preferences', [EngagementController::class, 'preferences'])->name('customer.notifications.preferences.index');
+        Route::put('/customer/notification-preferences/{channel}', [EngagementController::class, 'updatePreference'])->name('customer.notifications.preferences.update');
+        Route::delete('/customer/notification-preferences/{channel}', [EngagementController::class, 'unsubscribe'])->name('customer.notifications.preferences.unsubscribe');
+        Route::get('/customer/notification-signals', [EngagementController::class, 'signals'])->name('customer.notifications.signals.index');
+        Route::get('/customer/loyalty', [EngagementController::class, 'loyalty'])->name('customer.loyalty.show');
 
         Route::post('/commerce/shipping/quotes', [CommerceLifecycleController::class, 'shippingQuotes'])->middleware('throttle:p07-shipping-quotes')->name('commerce.shipping.quotes');
         Route::post('/commerce/checkout', [CommerceController::class, 'checkout'])->middleware('throttle:p07-checkout')->name('commerce.checkout.create');

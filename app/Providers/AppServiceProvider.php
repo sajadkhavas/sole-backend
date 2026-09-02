@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Contracts\MediaMalwareScanner;
+use App\Contracts\NotificationChannelAdapter;
 use App\Contracts\OtpSender;
 use App\Contracts\PaymentGateway;
 use App\Contracts\ShippingProvider;
@@ -30,6 +31,7 @@ use App\Services\Auth\KavenegarOtpSender;
 use App\Services\Commerce\ConfiguredShippingProvider;
 use App\Services\Commerce\DisabledPaymentGateway;
 use App\Services\Commerce\ZarinPalPaymentGateway;
+use App\Services\Engagement\DisabledNotificationChannelAdapter;
 use App\Services\Media\ClamAvMediaMalwareScanner;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -45,6 +47,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(MediaMalwareScanner::class, ClamAvMediaMalwareScanner::class);
         $this->app->bind(OtpSender::class, KavenegarOtpSender::class);
+        $this->app->singleton(NotificationChannelAdapter::class, DisabledNotificationChannelAdapter::class);
         $this->app->singleton(PaymentGateway::class, function ($app): PaymentGateway {
             return match ((string) config('commerce.payment.provider', 'disabled')) {
                 'disabled' => $app->make(DisabledPaymentGateway::class),
