@@ -51,7 +51,7 @@ class ContentPublicationService
             if ($revision === null || ContentPageRevision::query()->where('rollback_of_uuid', $revision->uuid)->exists()) {
                 throw new DomainException('CONTENT_PUBLICATION_ROLLBACK_UNAVAILABLE');
             }
-            if ($this->snapshot($locked) !== $revision->after) {
+            if (! $this->snapshotsMatch($this->snapshot($locked), $revision->after)) {
                 throw new DomainException('CONTENT_PUBLICATION_ROLLBACK_STALE');
             }
 
@@ -85,6 +85,13 @@ class ContentPublicationService
             'published_at' => $page->published_at?->toAtomString(),
             'version' => (int) $page->version,
         ];
+    }
+
+    private function snapshotsMatch(array $current, array $recorded): bool
+    {
+        return ($recorded['status'] ?? null) === $current['status']
+            && ($recorded['published_at'] ?? null) === $current['published_at']
+            && (int) ($recorded['version'] ?? 0) === $current['version'];
     }
 
     private function record(ContentPage $page, string $action, array $before, array $after, ?User $actor, ?string $rollbackOf = null): void
