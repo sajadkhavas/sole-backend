@@ -12,7 +12,6 @@ use App\Services\Engagement\LoyaltyLedgerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class EngagementController extends Controller
 {
