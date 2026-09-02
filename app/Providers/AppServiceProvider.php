@@ -16,8 +16,8 @@ use App\Models\InventoryLocation;
 use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\ProductVariant;
-use App\Models\SizeGuide;
 use App\Models\SeoRoutePolicy;
+use App\Models\SizeGuide;
 use App\Models\User;
 use App\Observers\AuditableObserver;
 use App\Policies\AuditLogPolicy;
@@ -69,7 +69,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Model::preventSilentlyDiscardingAttributes(!app()->isProduction());
+        Model::preventSilentlyDiscardingAttributes(! app()->isProduction());
 
         $this->configureP07RateLimiters();
 
