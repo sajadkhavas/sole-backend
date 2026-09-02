@@ -32,6 +32,7 @@ class TrustSupportController extends Controller
     public function cases(Request $request): JsonResponse
     {
         $cases = SupportCase::query()->where('user_id', $request->user()->id)->with('events')->latest('id')->get();
+
         return response()->json(['data' => $cases->map(fn (SupportCase $case): array => $this->casePayload($case))]);
     }
 
@@ -58,6 +59,7 @@ class TrustSupportController extends Controller
                 'event_key' => "support.case.{$case->public_id}.opened", 'template' => 'support_case_opened',
                 'payload' => ['case_id' => $case->public_id], 'status' => 'pending',
             ]);
+
             return $case->load('events');
         });
 
@@ -67,6 +69,7 @@ class TrustSupportController extends Controller
     public function case(Request $request, string $case): JsonResponse
     {
         $model = SupportCase::query()->where('user_id', $request->user()->id)->where('public_id', $case)->with('events')->firstOrFail();
+
         return response()->json(['data' => $this->casePayload($model)]);
     }
 
@@ -77,7 +80,9 @@ class TrustSupportController extends Controller
         if (in_array($model->status, ['resolved', 'closed'], true)) {
             return response()->json(['message' => 'Closed support cases cannot receive messages.'], 409);
         }
+
         $model->events()->create(['actor_id' => $request->user()->id, 'type' => 'customer_message', 'body' => $data['message'], 'created_at' => now()]);
+
         return response()->json(['data' => $this->casePayload($model->load('events'))], 201);
     }
 
@@ -85,6 +90,7 @@ class TrustSupportController extends Controller
     {
         $model = Order::query()->where('user_id', $request->user()->id)->where('public_id', $order)
             ->with(['events', 'shipment.events'])->firstOrFail();
+
         return response()->json(['data' => [
             'order_id' => $model->public_id, 'order_status' => $model->status,
             'shipment' => $model->shipment === null ? null : [
@@ -100,6 +106,7 @@ class TrustSupportController extends Controller
     public function messages(Request $request): JsonResponse
     {
         $rows = TransactionalMessage::query()->where('user_id', $request->user()->id)->latest('id')->limit(100)->get();
+
         return response()->json(['data' => $rows->map(fn (TransactionalMessage $message): array => [
             'id' => $message->public_id, 'template' => $message->template, 'channel' => $message->channel,
             'status' => $message->status, 'payload' => $message->payload,
@@ -111,6 +118,7 @@ class TrustSupportController extends Controller
     {
         $data = $request->validate(['order_item_id' => ['required', 'integer'], 'rating' => ['required', 'integer', 'between:1,5'], 'title' => ['nullable', 'string', 'max:120'], 'body' => ['required', 'string', 'max:5000']]);
         $item = OrderItem::query()->whereKey($data['order_item_id'])->whereHas('order', fn ($query) => $query->where('user_id', $request->user()->id)->where('status', 'fulfilled'))->firstOrFail();
+
         try {
             $review = ProductReview::query()->create([
                 'public_id' => (string) Str::uuid(), 'user_id' => $request->user()->id, 'order_id' => $item->order_id,
@@ -120,6 +128,7 @@ class TrustSupportController extends Controller
         } catch (UniqueConstraintViolationException) {
             return response()->json(['message' => 'This purchase has already been reviewed.'], 409);
         }
+
         return response()->json(['data' => ['id' => $review->public_id, 'status' => 'pending', 'verified_purchase' => true]], 201);
     }
 
