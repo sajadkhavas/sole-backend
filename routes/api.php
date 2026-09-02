@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\CustomerAccountController;
 use App\Http\Controllers\Api\V1\EngagementController;
 use App\Http\Controllers\Api\V1\OtpController;
 use App\Http\Controllers\Api\V1\ReadinessController;
+use App\Http\Controllers\Api\V1\SeoContentController;
 use App\Http\Controllers\Api\V1\SizeFitController;
 use App\Http\Controllers\Api\V1\TrustSupportController;
 use App\Http\Controllers\Auth\CustomerAuthController;
@@ -30,6 +31,10 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         ->middleware('throttle:p07-shipping-webhook')
         ->name('commerce.shipping.provider-events');
     Route::get('/trust/content', [TrustSupportController::class, 'content'])->name('trust.content');
+    Route::get('/content/pages/{page:slug}', [SeoContentController::class, 'content'])->name('content.pages.show');
+    Route::get('/seo/manifest', [SeoContentController::class, 'manifest'])->name('seo.manifest');
+    Route::get('/seo/sitemap', [SeoContentController::class, 'sitemap'])->name('seo.sitemap');
+    Route::get('/merchant/products', [SeoContentController::class, 'merchantProducts'])->middleware('throttle:30,1')->name('merchant.products');
 
     Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function (): void {
         Route::get('/auth/me', [CustomerAuthController::class, 'me'])->name('auth.me');

@@ -11,10 +11,12 @@ use App\Models\AuditLog;
 use App\Models\BusinessSetting;
 use App\Models\Category;
 use App\Models\Collection;
+use App\Models\ContentPage;
 use App\Models\InventoryLocation;
 use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\SeoRoutePolicy;
 use App\Models\SizeGuide;
 use App\Models\User;
 use App\Observers\AuditableObserver;
@@ -22,10 +24,12 @@ use App\Policies\AuditLogPolicy;
 use App\Policies\BusinessSettingPolicy;
 use App\Policies\CategoryPolicy;
 use App\Policies\CollectionPolicy;
+use App\Policies\ContentPagePolicy;
 use App\Policies\InventoryLocationPolicy;
 use App\Policies\InventoryMovementPolicy;
 use App\Policies\ProductPolicy;
 use App\Policies\ProductVariantPolicy;
+use App\Policies\SeoRoutePolicyPolicy;
 use App\Policies\UserPolicy;
 use App\Services\Auth\KavenegarOtpSender;
 use App\Services\Commerce\ConfiguredShippingProvider;
@@ -72,9 +76,11 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Category::class, CategoryPolicy::class);
         Gate::policy(Collection::class, CollectionPolicy::class);
+        Gate::policy(ContentPage::class, ContentPagePolicy::class);
         Gate::policy(Product::class, ProductPolicy::class);
         Gate::policy(ProductVariant::class, ProductVariantPolicy::class);
         Gate::policy(SizeGuide::class, ProductPolicy::class);
+        Gate::policy(SeoRoutePolicy::class, SeoRoutePolicyPolicy::class);
         Gate::policy(InventoryLocation::class, InventoryLocationPolicy::class);
         Gate::policy(InventoryMovement::class, InventoryMovementPolicy::class);
         Gate::policy(BusinessSetting::class, BusinessSettingPolicy::class);
@@ -84,9 +90,11 @@ class AppServiceProvider extends ServiceProvider
             User::class,
             Category::class,
             Collection::class,
+            ContentPage::class,
             Product::class,
             ProductVariant::class,
             SizeGuide::class,
+            SeoRoutePolicy::class,
             InventoryLocation::class,
             BusinessSetting::class,
         ] as $model) {
