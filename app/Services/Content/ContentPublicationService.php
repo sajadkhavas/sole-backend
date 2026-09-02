@@ -33,6 +33,7 @@ class ContentPublicationService
                 'published_at' => now(),
                 'version' => $locked->version + 1,
             ])->save();
+            $locked->refresh();
             $this->record($locked, 'publish', $before, $this->snapshot($locked), $actor);
 
             return $locked->fresh();
