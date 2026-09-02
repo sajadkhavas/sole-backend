@@ -239,6 +239,7 @@ class CheckoutService
                 'amount_minor' => $refund->amount_minor,
             ])->values()->all(),
             'items' => $order->items->map(fn ($item): array => [
+                'id' => $item->id,
                 'sku' => $item->sku,
                 'product_name' => $item->product_name,
                 'variant_title' => $item->variant_title,

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\CustomerAccountController;
 use App\Http\Controllers\Api\V1\OtpController;
 use App\Http\Controllers\Api\V1\ReadinessController;
 use App\Http\Controllers\Api\V1\SizeFitController;
+use App\Http\Controllers\Api\V1\TrustSupportController;
 use App\Http\Controllers\Auth\CustomerAuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +27,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::post('/commerce/shipping/provider-events', [CommerceLifecycleController::class, 'shippingWebhook'])
         ->middleware('throttle:p07-shipping-webhook')
         ->name('commerce.shipping.provider-events');
+    Route::get('/trust/content', [TrustSupportController::class, 'content'])->name('trust.content');
 
     Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function (): void {
         Route::get('/auth/me', [CustomerAuthController::class, 'me'])->name('auth.me');
@@ -56,6 +58,13 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('/commerce/payments/{payment}/reconcile', [CommerceLifecycleController::class, 'reconcilePayment'])->middleware('throttle:p07-payment-reconcile')->name('commerce.payments.reconcile');
         Route::post('/commerce/orders/{order}/returns', [CommerceLifecycleController::class, 'requestReturn'])->middleware('throttle:p07-return')->name('commerce.returns.request');
         Route::post('/commerce/orders/{order}/refunds', [CommerceLifecycleController::class, 'requestRefund'])->middleware('throttle:p07-refund')->name('commerce.refunds.request');
+        Route::get('/commerce/orders/{order}/tracking', [TrustSupportController::class, 'tracking'])->name('commerce.orders.tracking');
+        Route::get('/support/cases', [TrustSupportController::class, 'cases'])->name('support.cases.index');
+        Route::post('/support/cases', [TrustSupportController::class, 'createCase'])->middleware('throttle:20,1')->name('support.cases.store');
+        Route::get('/support/cases/{case}', [TrustSupportController::class, 'case'])->name('support.cases.show');
+        Route::post('/support/cases/{case}/messages', [TrustSupportController::class, 'message'])->middleware('throttle:30,1')->name('support.cases.messages.store');
+        Route::get('/communications', [TrustSupportController::class, 'messages'])->name('communications.index');
+        Route::post('/reviews', [TrustSupportController::class, 'review'])->middleware('throttle:10,1')->name('reviews.store');
 
         Route::post('/customer/otp', [OtpController::class, 'request'])
             ->middleware('throttle:20,1')
