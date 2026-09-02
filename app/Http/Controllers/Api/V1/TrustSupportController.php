@@ -10,6 +10,7 @@ use App\Models\ProductReview;
 use App\Models\SupportCase;
 use App\Models\TransactionalMessage;
 use App\Models\TrustContent;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -117,7 +118,7 @@ class TrustSupportController extends Controller
                 'order_item_id' => $item->id, 'product_variant_id' => $item->product_variant_id,
                 'rating' => $data['rating'], 'title' => $data['title'] ?? null, 'body' => $data['body'], 'status' => 'pending',
             ]);
-        } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+        } catch (UniqueConstraintViolationException) {
             return response()->json(['message' => 'This purchase has already been reviewed.'], 409);
         }
         return response()->json(['data' => ['id' => $review->public_id, 'status' => 'pending', 'verified_purchase' => true]], 201);
