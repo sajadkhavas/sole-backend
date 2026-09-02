@@ -72,6 +72,7 @@ class ContentPublicationService
             $before = $this->snapshot($locked);
             $locked->forceFill(['status' => $to])->save();
             $this->record($locked, $to, $before, $this->snapshot($locked), $actor);
+
             return $locked->fresh();
         }, 3);
     }
