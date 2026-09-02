@@ -16,6 +16,7 @@ class BackInStockIntent extends Model
         'consent_granted_at',
         'source',
         'status',
+        'unsubscribe_token_hash',
         'unsubscribed_at',
         'last_signalled_at',
     ];
@@ -33,5 +34,10 @@ class BackInStockIntent extends Model
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

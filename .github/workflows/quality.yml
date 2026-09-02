@@ -80,6 +80,9 @@ jobs:
       - name: Verify real MySQL inventory concurrency
         env: *mysql-test-env
         run: php tests/Support/inventory-concurrency.php
+      - name: Verify real MySQL loyalty redemption concurrency
+        env: *mysql-test-env
+        run: php tests/Support/loyalty-concurrency.php
       - name: Verify routes and operator surface boot
         run: |
           php artisan route:list --except-vendor

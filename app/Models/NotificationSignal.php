@@ -3,7 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use RuntimeException;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class NotificationSignal extends Model
 {
@@ -11,11 +12,24 @@ class NotificationSignal extends Model
 
     protected function casts(): array
     {
-        return ['facts' => 'array', 'eligible_at' => 'immutable_datetime'];
+        return [
+            'facts' => 'array',
+            'eligible_at' => 'datetime',
+        ];
     }
 
-    protected static function booted(): void
+    public function user(): BelongsTo
     {
-        static::deleting(fn (): never => throw new RuntimeException('Notification signals are durable records.'));
+        return $this->belongsTo(User::class);
+    }
+
+    public function productVariant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function deliveryAttempts(): HasMany
+    {
+        return $this->hasMany(NotificationDeliveryAttempt::class);
     }
 }
