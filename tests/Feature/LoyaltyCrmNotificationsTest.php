@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\BackInStockIntent;
 use App\Models\CustomerWishlistItem;
 use App\Models\InventoryLocation;
-use App\Models\LoyaltyLedgerEntry;
 use App\Models\NotificationDeliveryAttempt;
 use App\Models\NotificationPreference;
 use App\Models\NotificationSignal;
