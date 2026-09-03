@@ -66,6 +66,7 @@ class ProductionReadinessTest extends TestCase
         $this->assertStringContainsString('ProtectSystem=strict', $queue);
         $this->assertStringContainsString('--single-transaction', $backup);
         $this->assertStringContainsString('MYSQL_DEFAULTS_FILE', $backup);
+        $this->assertStringContainsString('SOLE_BACKUP_PRUNE:-NO', $backup);
         $this->assertStringNotContainsString('DB_PASSWORD=', $backup);
         $this->assertStringContainsString('sole_restore_', $restore);
         $this->assertStringContainsString('P13_OR_P14_APPROVED', $activate);
