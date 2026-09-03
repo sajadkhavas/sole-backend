@@ -24,7 +24,7 @@ The Laravel scheduler is a systemd oneshot launched by a one-minute persistent t
 
 ## Backup and restore
 
-`scripts/production/mysql-backup.sh` uses MySQL logical backup with `--single-transaction`, `--quick`, routines/events/triggers, gzip compression, mode 0600 output and a SHA-256 sidecar. Credentials are read from a protected MySQL client defaults file and are never echoed. Retention defaults to seven days and must be complemented by an off-host encrypted copy before P14.
+`scripts/production/mysql-backup.sh` uses MySQL logical backup with `--single-transaction`, `--quick`, routines/events/triggers, gzip compression, mode 0600 output and a SHA-256 sidecar. Credentials are read from a protected MySQL client defaults file and are never echoed. Retention defaults to seven days, but pruning is fail-closed unless `SOLE_BACKUP_PRUNE=YES` is explicitly supplied; an off-host encrypted copy is required before P14.
 
 A backup is not accepted as recoverable until `mysql-restore-drill.sh` verifies the checksum, restores into a database whose name is restricted to `sole_restore_*`, proves migration history and critical tables, then drops the disposable database. It never restores over the production schema.
 
