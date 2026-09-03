@@ -54,7 +54,9 @@ class AnalyticsTaxonomy
             throw new DomainException('ANALYTICS_RUM_VALUE_INVALID');
         }
 
-        $enums = $this->pickEnums($properties, [
+        $metadata = $properties;
+        unset($metadata['value']);
+        $enums = $this->pickEnums($metadata, [
             'rating' => ['good', 'needs_improvement', 'poor'],
             'navigation_type' => ['navigate', 'reload', 'back_forward', 'prerender'],
         ]);
