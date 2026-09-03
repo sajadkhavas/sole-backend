@@ -71,7 +71,7 @@ class ObservabilityRumCroTest extends TestCase
 
         $event = AnalyticsEvent::query()->firstOrFail();
         $this->assertSame($session, $event->session_id);
-        $this->assertSame(['value' => 1200.0, 'rating' => 'good', 'navigation_type' => 'navigate'], $event->properties);
+        $this->assertSame(['value' => 1200, 'rating' => 'good', 'navigation_type' => 'navigate'], $event->properties);
         $this->assertFalse(array_key_exists('user_id', $event->getAttributes()));
         $this->assertDatabaseCount('analytics_events', 1);
     }
