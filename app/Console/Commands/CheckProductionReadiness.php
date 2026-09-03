@@ -21,7 +21,7 @@ class CheckProductionReadiness extends Command
         $workerTimeout = (int) config('sole.production.queue_worker_timeout', 60);
 
         $checks = [
-            'environment_is_production' => app()->environment('production'),
+            'environment_is_production' => config('app.env') === 'production',
             'debug_is_disabled' => config('app.debug') === false,
             'app_url_is_https' => $this->isHttpsUrl(config('app.url')),
             'public_site_url_is_https' => $this->isHttpsUrl(config('sole.public_site_url')),
@@ -32,7 +32,7 @@ class CheckProductionReadiness extends Command
             'queue_timeout_precedes_retry_after' => $retryAfter > $workerTimeout,
             'queue_failed_jobs_are_persisted' => config('queue.failed.driver') === 'database-uuids',
             'cache_store_is_durable' => ! in_array(config('cache.default'), ['array', 'null'], true),
-            'prototype_mode_is_disabled' => config('app.prototype_mode', false) === false,
+            'prototype_mode_is_disabled' => config('app.prototype_mode') === false,
         ];
 
         if ($this->option('connections')) {

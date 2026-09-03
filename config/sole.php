@@ -2,6 +2,13 @@
 
 return [
     'public_site_url' => env('SOLE_PUBLIC_SITE_URL'),
+    'production' => [
+        'queue_worker_timeout' => 60,
+        'queue_worker_tries' => 3,
+        'queue_worker_backoff' => 5,
+        'queue_worker_max_time' => 3600,
+        'backup_retention_days' => 7,
+    ],
     'permissions' => [
         'admin.access' => 'Access the administration panel',
         'users.view' => 'View administrators',

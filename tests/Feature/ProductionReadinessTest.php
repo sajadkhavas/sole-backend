@@ -9,8 +9,8 @@ class ProductionReadinessTest extends TestCase
 {
     public function test_production_readiness_command_accepts_secure_runtime_contract(): void
     {
-        app()->detectEnvironment(fn (): string => 'production');
         config()->set([
+            'app.env' => 'production',
             'app.debug' => false,
             'app.url' => 'https://api.sole.example',
             'app.prototype_mode' => false,
@@ -32,8 +32,8 @@ class ProductionReadinessTest extends TestCase
 
     public function test_production_readiness_fails_closed_when_debug_or_queue_timing_is_unsafe(): void
     {
-        app()->detectEnvironment(fn (): string => 'production');
         config()->set([
+            'app.env' => 'production',
             'app.debug' => true,
             'app.url' => 'https://api.sole.example',
             'app.prototype_mode' => false,
