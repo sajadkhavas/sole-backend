@@ -34,8 +34,11 @@ class ExperimentService
 
     public function pause(Experiment $experiment): Experiment
     {
-        if ($experiment->status !== 'running') throw new DomainException('EXPERIMENT_NOT_RUNNING');
+        if ($experiment->status !== 'running') {
+            throw new DomainException('EXPERIMENT_NOT_RUNNING');
+        }
         $experiment->forceFill(['status' => 'paused'])->save();
+
         return $experiment->refresh();
     }
 
@@ -54,6 +57,7 @@ class ExperimentService
             ->get()
             ->map(function (Experiment $experiment) use ($sessionId): array {
                 $this->validateDefinition($experiment);
+
                 return [
                     'key' => $experiment->key,
                     'version' => (int) $experiment->version,
@@ -79,7 +83,9 @@ class ExperimentService
             ->where('properties->experiment_key', $experiment->key)
             ->where('properties->version', (int) $experiment->version)
             ->first();
-        if ($existing !== null) return $existing;
+        if ($existing !== null) {
+            return $existing;
+        }
 
         return AnalyticsEvent::query()->create([
             'session_id' => $sessionId,
@@ -100,25 +106,47 @@ class ExperimentService
 
     public function validateDefinition(Experiment $experiment): void
     {
-        if (preg_match('/^[a-z0-9][a-z0-9_-]{2,79}$/', $experiment->key) !== 1) throw new DomainException('EXPERIMENT_KEY_INVALID');
-        if (trim((string) $experiment->hypothesis) === '' || mb_strlen($experiment->hypothesis) > 500) throw new DomainException('EXPERIMENT_HYPOTHESIS_REQUIRED');
-        if (! in_array($experiment->primary_metric, AnalyticsTaxonomy::EXPERIMENT_METRICS, true)) throw new DomainException('EXPERIMENT_PRIMARY_METRIC_INVALID');
+        if (preg_match('/^[a-z0-9][a-z0-9_-]{2,79}$/', $experiment->key) !== 1) {
+            throw new DomainException('EXPERIMENT_KEY_INVALID');
+        }
+        if (trim((string) $experiment->hypothesis) === '' || mb_strlen($experiment->hypothesis) > 500) {
+            throw new DomainException('EXPERIMENT_HYPOTHESIS_REQUIRED');
+        }
+        if (! in_array($experiment->primary_metric, AnalyticsTaxonomy::EXPERIMENT_METRICS, true)) {
+            throw new DomainException('EXPERIMENT_PRIMARY_METRIC_INVALID');
+        }
         foreach ($experiment->guardrail_metrics ?? [] as $metric) {
-            if (! is_string($metric) || ! in_array($metric, AnalyticsTaxonomy::EXPERIMENT_METRICS, true)) throw new DomainException('EXPERIMENT_GUARDRAIL_INVALID');
+            if (! is_string($metric) || ! in_array($metric, AnalyticsTaxonomy::EXPERIMENT_METRICS, true)) {
+                throw new DomainException('EXPERIMENT_GUARDRAIL_INVALID');
+            }
         }
         $variants = $experiment->variants ?? [];
-        if (count($variants) < 2 || count($variants) > 5 || count(array_unique($variants)) !== count($variants)) throw new DomainException('EXPERIMENT_VARIANTS_INVALID');
+        if (count($variants) < 2 || count($variants) > 5 || count(array_unique($variants)) !== count($variants)) {
+            throw new DomainException('EXPERIMENT_VARIANTS_INVALID');
+        }
         foreach ($variants as $variant) {
-            if (! is_string($variant) || preg_match('/^[a-z0-9][a-z0-9_-]{0,31}$/', $variant) !== 1) throw new DomainException('EXPERIMENT_VARIANT_INVALID');
+            if (! is_string($variant) || preg_match('/^[a-z0-9][a-z0-9_-]{0,31}$/', $variant) !== 1) {
+                throw new DomainException('EXPERIMENT_VARIANT_INVALID');
+            }
         }
         $allocation = $experiment->allocation_basis_points ?? [];
-        if (array_keys($allocation) !== $variants || array_sum($allocation) !== 10_000) throw new DomainException('EXPERIMENT_ALLOCATION_INVALID');
-        foreach ($allocation as $basisPoints) {
-            if (! is_int($basisPoints) || $basisPoints <= 0) throw new DomainException('EXPERIMENT_ALLOCATION_INVALID');
+        if (array_keys($allocation) !== $variants || array_sum($allocation) !== 10_000) {
+            throw new DomainException('EXPERIMENT_ALLOCATION_INVALID');
         }
-        if ((int) $experiment->minimum_sample_size < 100) throw new DomainException('EXPERIMENT_SAMPLE_PLAN_REQUIRED');
-        if (trim((string) $experiment->rollback_plan) === '') throw new DomainException('EXPERIMENT_ROLLBACK_REQUIRED');
-        if ($experiment->starts_at !== null && $experiment->stops_at !== null && $experiment->stops_at <= $experiment->starts_at) throw new DomainException('EXPERIMENT_WINDOW_INVALID');
+        foreach ($allocation as $basisPoints) {
+            if (! is_int($basisPoints) || $basisPoints <= 0) {
+                throw new DomainException('EXPERIMENT_ALLOCATION_INVALID');
+            }
+        }
+        if ((int) $experiment->minimum_sample_size < 100) {
+            throw new DomainException('EXPERIMENT_SAMPLE_PLAN_REQUIRED');
+        }
+        if (trim((string) $experiment->rollback_plan) === '') {
+            throw new DomainException('EXPERIMENT_ROLLBACK_REQUIRED');
+        }
+        if ($experiment->starts_at !== null && $experiment->stops_at !== null && $experiment->stops_at <= $experiment->starts_at) {
+            throw new DomainException('EXPERIMENT_WINDOW_INVALID');
+        }
     }
 
     private function variantFor(Experiment $experiment, string $sessionId): string
@@ -129,7 +157,9 @@ class ExperimentService
         $cursor = 0;
         foreach ($experiment->allocation_basis_points as $variant => $basisPoints) {
             $cursor += $basisPoints;
-            if ($slot < $cursor) return $variant;
+            if ($slot < $cursor) {
+                return $variant;
+            }
         }
 
         return $experiment->variants[array_key_last($experiment->variants)];

@@ -11,6 +11,7 @@ class ObservabilityErrorEvent extends Model
     use HasUuids;
 
     public $incrementing = false;
+
     public $timestamps = false;
 
     protected $fillable = [

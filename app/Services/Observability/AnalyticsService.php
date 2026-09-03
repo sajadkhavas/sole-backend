@@ -106,10 +106,12 @@ class AnalyticsService
 
         if ($route === 'api.v1.commerce.cart.items.put' && $status >= 200 && $status < 300) {
             $this->recordAuthoritative($request, 'cart_engaged', 'cart');
+
             return;
         }
         if ($route === 'api.v1.commerce.checkout.create' && $status === 201) {
             $this->recordAuthoritative($request, 'order_created', 'checkout');
+
             return;
         }
         if (in_array($route, ['api.v1.commerce.payments.verify', 'api.v1.commerce.payments.reconcile'], true) && $status >= 200 && $status < 300) {
@@ -122,7 +124,9 @@ class AnalyticsService
 
     private function validTraceId(?string $traceId): ?string
     {
-        if (! is_string($traceId)) return null;
+        if (! is_string($traceId)) {
+            return null;
+        }
         $traceId = strtolower($traceId);
 
         return preg_match('/^[0-9a-f]{32}$/', $traceId) === 1 && $traceId !== str_repeat('0', 32) ? $traceId : null;

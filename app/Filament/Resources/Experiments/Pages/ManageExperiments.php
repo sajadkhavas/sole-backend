@@ -10,5 +10,8 @@ class ManageExperiments extends ManageRecords
 {
     protected static string $resource = ExperimentResource::class;
 
-    protected function getHeaderActions(): array { return [CreateAction::make()]; }
+    protected function getHeaderActions(): array
+    {
+        return [CreateAction::make()];
+    }
 }

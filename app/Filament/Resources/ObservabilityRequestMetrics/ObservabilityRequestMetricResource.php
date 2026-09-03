@@ -12,9 +12,13 @@ use Filament\Tables\Table;
 class ObservabilityRequestMetricResource extends Resource
 {
     protected static ?string $model = ObservabilityRequestMetric::class;
+
     protected static ?string $navigationLabel = 'Request RED metrics';
 
-    public static function form(Schema $schema): Schema { return $schema->components([]); }
+    public static function form(Schema $schema): Schema
+    {
+        return $schema->components([]);
+    }
 
     public static function table(Table $table): Table
     {
@@ -29,5 +33,8 @@ class ObservabilityRequestMetricResource extends Resource
         ])->defaultSort('bucket_started_at', 'desc');
     }
 
-    public static function getPages(): array { return ['index' => ManageObservabilityRequestMetrics::route('/')]; }
+    public static function getPages(): array
+    {
+        return ['index' => ManageObservabilityRequestMetrics::route('/')];
+    }
 }

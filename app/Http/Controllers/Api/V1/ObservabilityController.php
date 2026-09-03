@@ -67,6 +67,7 @@ class ObservabilityController extends Controller
             $analytics->recordClient($request->user(), $sessionId, $data['event_name'], $data['route_name'], $data['properties'], $traceId);
         } catch (DomainException $exception) {
             $status = $exception->getMessage() === 'ANALYTICS_CONSENT_REQUIRED' ? 403 : 422;
+
             return response()->json(['message' => $exception->getMessage()], $status);
         }
 
@@ -96,7 +97,9 @@ class ObservabilityController extends Controller
             'variant' => ['required', 'string', 'max:32'],
         ]);
         $sessionId = trim((string) $request->header('X-Sole-Analytics-Session'));
-        if (! Str::isUuid($sessionId)) return response()->json(['message' => 'ANALYTICS_SESSION_INVALID'], 422);
+        if (! Str::isUuid($sessionId)) {
+            return response()->json(['message' => 'ANALYTICS_SESSION_INVALID'], 422);
+        }
 
         $experiment = Experiment::query()->where('key', $data['key'])->where('version', $data['version'])->where('status', 'running')->firstOrFail();
         $context = $request->attributes->get('sole.observability');
@@ -106,6 +109,7 @@ class ObservabilityController extends Controller
             $experiments->recordExposure($request->user(), $sessionId, $experiment, $data['variant'], $traceId);
         } catch (DomainException $exception) {
             $status = $exception->getMessage() === 'ANALYTICS_CONSENT_REQUIRED' ? 403 : 422;
+
             return response()->json(['message' => $exception->getMessage()], $status);
         }
 

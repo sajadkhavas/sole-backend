@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Gate;
 class ExperimentResource extends Resource
 {
     protected static ?string $model = Experiment::class;
+
     protected static ?string $recordTitleAttribute = 'key';
 
     public static function form(Schema $schema): Schema
@@ -66,5 +67,8 @@ class ExperimentResource extends Resource
         ]);
     }
 
-    public static function getPages(): array { return ['index' => ManageExperiments::route('/')]; }
+    public static function getPages(): array
+    {
+        return ['index' => ManageExperiments::route('/')];
+    }
 }

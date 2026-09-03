@@ -7,9 +7,13 @@ use DomainException;
 class AnalyticsTaxonomy
 {
     public const VERSION = 1;
+
     public const ROUTES = ['home', 'catalog', 'product', 'cart', 'checkout', 'account', 'wishlist', 'orders', 'content', 'other'];
+
     public const CLIENT_EVENTS = ['catalog_view', 'product_view', 'checkout_view', 'client_error', 'rum_lcp', 'rum_inp', 'rum_cls', 'rum_ttfb'];
+
     public const SERVER_EVENTS = ['cart_engaged', 'order_created', 'payment_paid', 'experiment_exposure'];
+
     public const EXPERIMENT_METRICS = [
         'catalog_to_product_rate', 'product_to_cart_rate', 'cart_to_checkout_rate', 'checkout_to_order_rate',
         'order_to_paid_rate', 'rum_lcp', 'rum_inp', 'rum_cls',

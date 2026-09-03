@@ -12,9 +12,13 @@ use Filament\Tables\Table;
 class AnalyticsFunnelSnapshotResource extends Resource
 {
     protected static ?string $model = AnalyticsFunnelSnapshot::class;
+
     protected static ?string $navigationLabel = 'Consent-aware funnel';
 
-    public static function form(Schema $schema): Schema { return $schema->components([]); }
+    public static function form(Schema $schema): Schema
+    {
+        return $schema->components([]);
+    }
 
     public static function table(Table $table): Table
     {
@@ -31,5 +35,8 @@ class AnalyticsFunnelSnapshotResource extends Resource
         ])->defaultSort('snapshot_date', 'desc');
     }
 
-    public static function getPages(): array { return ['index' => ManageAnalyticsFunnelSnapshots::route('/')]; }
+    public static function getPages(): array
+    {
+        return ['index' => ManageAnalyticsFunnelSnapshots::route('/')];
+    }
 }
