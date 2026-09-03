@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ObserveRequest;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,7 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        $middleware->appendToGroup('api', [ObserveRequest::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // P11 request middleware records sanitized exception class/fingerprint and rethrows.
     })->create();
