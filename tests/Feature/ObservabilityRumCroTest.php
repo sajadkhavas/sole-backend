@@ -62,7 +62,8 @@ class ObservabilityRumCroTest extends TestCase
         $this->actingAs($user)->putJson('/api/v1/observability/consent', [
             'granted' => true, 'policy_version' => 'p11-analytics-v1',
         ])->assertCreated()->assertJsonPath('data.granted', true);
-        $this->actingAs($user)->postJson('/api/v1/observability/events', $payload, $headers)->assertAccepted();
+        $accepted = $this->actingAs($user)->postJson('/api/v1/observability/events', $payload, $headers);
+        $this->assertSame(202, $accepted->status(), $accepted->getContent());
         $this->actingAs($user)->postJson('/api/v1/observability/events', [
             'taxonomy_version' => 1, 'event_name' => 'product_view', 'route_name' => 'product',
             'properties' => ['email' => $user->email],
