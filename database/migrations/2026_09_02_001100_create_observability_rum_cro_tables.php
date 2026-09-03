@@ -27,7 +27,7 @@ return new class extends Migration
             $table->unsignedBigInteger('duration_gt_5000_ms')->default(0);
             $table->timestamps();
             $table->unique(['bucket_started_at', 'route_name', 'method', 'status_class'], 'observability_request_metrics_bucket_unique');
-            $table->index(['bucket_started_at', 'status_class']);
+            $table->index(['bucket_started_at', 'status_class'], 'obs_metrics_bucket_status_idx');
         });
 
         Schema::create('observability_error_events', function (Blueprint $table): void {
