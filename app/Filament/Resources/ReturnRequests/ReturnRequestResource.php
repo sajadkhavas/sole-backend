@@ -32,6 +32,7 @@ class ReturnRequestResource extends Resource
                 ->action(fn (array $data, ReturnRequest $record, AdminOperationsService $service) => $service->transitionReturn($record, $data['status'], $data['reason'])),
         ]);
     }
+
     public static function getPages(): array
     {
         return ['index' => Pages\ManageReturnRequests::route('/')];

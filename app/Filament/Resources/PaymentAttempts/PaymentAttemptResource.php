@@ -34,6 +34,7 @@ class PaymentAttemptResource extends Resource
                 ->action(fn (PaymentAttempt $record, AdminOperationsService $service) => $service->reconcilePayment($record)),
         ]);
     }
+
     public static function getPages(): array
     {
         return ['index' => ManagePaymentAttempts::route('/')];

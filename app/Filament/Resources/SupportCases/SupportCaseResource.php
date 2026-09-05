@@ -37,6 +37,7 @@ class SupportCaseResource extends Resource
                 ])->action(fn (array $data, SupportCase $record, AdminOperationsService $service) => $service->updateSupportCase($record, $data['status'], $data['priority'], $data['message'])),
         ]);
     }
+
     public static function getPages(): array
     {
         return ['index' => Pages\ManageSupportCases::route('/')];

@@ -36,6 +36,7 @@ class RefundRequestResource extends Resource
                 ])->action(fn (array $data, RefundRequest $record, AdminOperationsService $service) => $service->transitionRefund($record, $data['status'], $data['reason'], $data['provider_reference'] ?? null)),
         ]);
     }
+
     public static function getPages(): array
     {
         return ['index' => Pages\ManageRefundRequests::route('/')];

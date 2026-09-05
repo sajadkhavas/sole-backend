@@ -33,6 +33,7 @@ class ProductReviewResource extends Resource
                 ->action(fn (array $data, ProductReview $record, AdminOperationsService $service) => $service->moderateReview($record, $data['decision'], $data['reason'])),
         ]);
     }
+
     public static function getPages(): array
     {
         return ['index' => Pages\ManageProductReviews::route('/')];

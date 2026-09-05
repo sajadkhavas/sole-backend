@@ -37,6 +37,7 @@ class ShipmentResource extends Resource
                 ])->action(fn (array $data, Shipment $record, AdminOperationsService $service) => $service->transitionShipment($record, $data['status'], $data['reason'], $data['tracking_number'] ?? null)),
         ]);
     }
+
     public static function getPages(): array
     {
         return ['index' => Pages\ManageShipments::route('/')];
