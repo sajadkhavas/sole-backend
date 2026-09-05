@@ -53,6 +53,8 @@ jobs:
         run: vendor/bin/pint --test
       - name: Static PHP syntax analysis
         run: find app config database routes tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: P12 production readiness static contracts
+        run: bash scripts/production/audit-p12-contracts.sh
       - name: Verify migrations and RBAC on MySQL
         env: &mysql-test-env
           APP_ENV: testing
@@ -89,11 +91,21 @@ jobs:
           php artisan list sole
       - name: Audit locked production dependencies
         run: composer audit --locked --no-dev
-      - name: Verify production configuration cache
+      - name: Verify production configuration cache and P12 invariants
         env:
           APP_ENV: production
           APP_DEBUG: 'false'
           APP_PROTOTYPE_MODE: 'false'
+          APP_URL: https://api.sole.example
+          SOLE_PUBLIC_SITE_URL: https://sole.example
+          SESSION_SECURE_COOKIE: 'true'
+          SESSION_HTTP_ONLY: 'true'
+          SESSION_SAME_SITE: lax
+          QUEUE_CONNECTION: database
+          DB_QUEUE_RETRY_AFTER: '90'
+          QUEUE_FAILED_DRIVER: database-uuids
+          CACHE_STORE: database
         run: |
           php artisan config:cache
           php artisan route:list --except-vendor
+          php artisan sole:production:check --json
