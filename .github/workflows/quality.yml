@@ -55,6 +55,8 @@ jobs:
         run: find app config database routes tests -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: P12 production readiness static contracts
         run: bash scripts/production/audit-p12-contracts.sh
+      - name: P13 admin operations static contracts
+        run: bash scripts/production/audit-p13-admin-operations.sh
       - name: Verify migrations and RBAC on MySQL
         env: &mysql-test-env
           APP_ENV: testing
