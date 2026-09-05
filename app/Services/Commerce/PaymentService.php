@@ -138,6 +138,21 @@ class PaymentService
         if ($attempt->order->user_id !== $user->id) {
             throw new RuntimeException('Payment attempt does not belong to this customer.');
         }
+
+        return $this->reconcileAttempt($attempt);
+    }
+
+    /** @return array<string, mixed> */
+    public function reconcileForOperations(PaymentAttempt $attempt): array
+    {
+        $attempt->loadMissing('order');
+
+        return $this->reconcileAttempt($attempt);
+    }
+
+    /** @return array<string, mixed> */
+    private function reconcileAttempt(PaymentAttempt $attempt): array
+    {
         if ($attempt->provider !== $this->gateway->provider()) {
             throw new RuntimeException('Payment provider mismatch.');
         }

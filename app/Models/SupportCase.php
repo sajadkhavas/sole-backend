@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,8 @@ use RuntimeException;
 
 class SupportCase extends Model
 {
+    protected static bool $stateMutationAllowed = false;
+
     protected $guarded = ['id'];
 
     protected function casts(): array
@@ -18,7 +21,23 @@ class SupportCase extends Model
 
     protected static function booted(): void
     {
+        static::updating(function (self $case): void {
+            if ($case->isDirty(['status', 'priority', 'resolved_at']) && ! static::$stateMutationAllowed) {
+                throw new RuntimeException('Support case state may only change through the operations service.');
+            }
+        });
         static::deleting(fn (): never => throw new RuntimeException('Support cases are durable records.'));
+    }
+
+    public static function withinStateTransition(Closure $callback): mixed
+    {
+        $previous = static::$stateMutationAllowed;
+        static::$stateMutationAllowed = true;
+        try {
+            return $callback();
+        } finally {
+            static::$stateMutationAllowed = $previous;
+        }
     }
 
     public function user(): BelongsTo
