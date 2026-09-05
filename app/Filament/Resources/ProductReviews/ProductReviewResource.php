@@ -15,10 +15,12 @@ use Filament\Tables\Table;
 class ProductReviewResource extends Resource
 {
     protected static ?string $model = ProductReview::class;
+
     public static function form(Schema $schema): Schema
     {
         return $schema->components([]);
     }
+
     public static function table(Table $table): Table
     {
         return $table->columns([

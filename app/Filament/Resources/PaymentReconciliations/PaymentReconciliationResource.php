@@ -11,10 +11,12 @@ use Filament\Tables\Table;
 class PaymentReconciliationResource extends Resource
 {
     protected static ?string $model = PaymentReconciliation::class;
+
     public static function form(Schema $schema): Schema
     {
         return $schema->components([]);
     }
+
     public static function table(Table $table): Table
     {
         return $table->columns([
@@ -25,6 +27,7 @@ class PaymentReconciliationResource extends Resource
             TextColumn::make('reconciled_at')->dateTime()->sortable(),
         ])->defaultSort('reconciled_at', 'desc');
     }
+
     public static function getPages(): array
     {
         return ['index' => Pages\ManagePaymentReconciliations::route('/')];

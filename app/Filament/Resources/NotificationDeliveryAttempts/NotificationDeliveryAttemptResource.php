@@ -11,10 +11,12 @@ use Filament\Tables\Table;
 class NotificationDeliveryAttemptResource extends Resource
 {
     protected static ?string $model = NotificationDeliveryAttempt::class;
+
     public static function form(Schema $schema): Schema
     {
         return $schema->components([]);
     }
+
     public static function table(Table $table): Table
     {
         return $table->columns([
@@ -23,6 +25,7 @@ class NotificationDeliveryAttemptResource extends Resource
             TextColumn::make('reason')->searchable(), TextColumn::make('response_hash')->toggleable(), TextColumn::make('attempted_at')->dateTime()->sortable(),
         ])->defaultSort('attempted_at', 'desc');
     }
+
     public static function getPages(): array
     {
         return ['index' => Pages\ManageNotificationDeliveryAttempts::route('/')];

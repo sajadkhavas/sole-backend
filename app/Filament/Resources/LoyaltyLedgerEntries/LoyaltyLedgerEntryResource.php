@@ -11,10 +11,12 @@ use Filament\Tables\Table;
 class LoyaltyLedgerEntryResource extends Resource
 {
     protected static ?string $model = LoyaltyLedgerEntry::class;
+
     public static function form(Schema $schema): Schema
     {
         return $schema->components([]);
     }
+
     public static function table(Table $table): Table
     {
         return $table->columns([
@@ -23,6 +25,7 @@ class LoyaltyLedgerEntryResource extends Resource
             TextColumn::make('reason')->searchable(), TextColumn::make('idempotency_key')->toggleable(), TextColumn::make('created_at')->dateTime()->sortable(),
         ])->defaultSort('created_at', 'desc');
     }
+
     public static function getPages(): array
     {
         return ['index' => Pages\ManageLoyaltyLedgerEntries::route('/')];

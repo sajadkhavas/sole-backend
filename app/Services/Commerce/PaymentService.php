@@ -138,6 +138,7 @@ class PaymentService
         if ($attempt->order->user_id !== $user->id) {
             throw new RuntimeException('Payment attempt does not belong to this customer.');
         }
+
         return $this->reconcileAttempt($attempt);
     }
 
