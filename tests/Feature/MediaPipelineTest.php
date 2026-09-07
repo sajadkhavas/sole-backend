@@ -126,6 +126,25 @@ class MediaPipelineTest extends TestCase
         app(MediaAttachmentService::class)->attach($ready, 'product', $product->getKey(), 'main');
     }
 
+    public function test_low_memory_trusted_admin_driver_records_truthful_security_evidence(): void
+    {
+        Storage::fake('media_quarantine');
+        Storage::fake('media_public');
+        config(['sole_media.malware_scanner_driver' => 'trusted-admin-reencode']);
+        $this->app->forgetInstance(MediaMalwareScanner::class);
+        $asset = $this->assetWithPng('uploads/low-memory');
+
+        $ready = app(MediaProcessor::class)->process($asset);
+
+        $this->assertSame(MediaAsset::STATUS_READY, $ready->status);
+        $this->assertSame('trusted-admin-reencode', $ready->metadata['security_driver']);
+        $this->assertSame('passed', $ready->metadata['structural_validation']);
+        $this->assertTrue($ready->metadata['public_derivatives_reencoded']);
+        $this->assertSame('not_performed', $ready->metadata['malware_scan']);
+        $this->assertArrayNotHasKey('malware_scanned_at', $ready->metadata);
+        $this->assertSame(3, $ready->variants->count());
+    }
+
     private function assetWithPng(string $path = 'uploads/valid'): MediaAsset
     {
         $image = imagecreatetruecolor(20, 20);

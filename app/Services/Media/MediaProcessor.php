@@ -85,8 +85,9 @@ class MediaProcessor
             $deliveryDisk = (string) config('sole_media.delivery_disk');
             $recipeVersion = (int) config('sole_media.recipe_version');
             $cacheControl = (string) config('sole_media.immutable_cache_control');
+            $securityDriver = (string) config('sole_media.malware_scanner_driver', 'clamav');
 
-            DB::transaction(function () use ($asset, $bytes, $bytesCount, $mime, $width, $height, $sha, $sourcePath, $sourceDisk, $deliveryDisk, $recipeVersion, $cacheControl, $image): void {
+            DB::transaction(function () use ($asset, $bytes, $bytesCount, $mime, $width, $height, $sha, $sourcePath, $sourceDisk, $deliveryDisk, $recipeVersion, $cacheControl, $securityDriver, $image): void {
                 Storage::disk($sourceDisk)->put($sourcePath, $bytes);
 
                 foreach ((array) config('sole_media.recipes') as $name => $recipe) {
@@ -120,8 +121,15 @@ class MediaProcessor
                 }
 
                 $metadata = (array) ($asset->metadata ?? []);
-                $metadata['malware_scan'] = 'clean';
-                $metadata['malware_scanned_at'] = now()->toAtomString();
+                $metadata['security_driver'] = $securityDriver;
+                $metadata['structural_validation'] = 'passed';
+                $metadata['public_derivatives_reencoded'] = true;
+                $metadata['malware_scan'] = $securityDriver === 'clamav' ? 'clean' : 'not_performed';
+                if ($securityDriver === 'clamav') {
+                    $metadata['malware_scanned_at'] = now()->toAtomString();
+                } else {
+                    unset($metadata['malware_scanned_at']);
+                }
                 $metadata['cache_control'] = $cacheControl;
 
                 $asset->forceFill([

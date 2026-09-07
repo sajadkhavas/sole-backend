@@ -63,6 +63,7 @@ use App\Services\Commerce\DisabledPaymentGateway;
 use App\Services\Commerce\ZarinPalPaymentGateway;
 use App\Services\Engagement\DisabledNotificationChannelAdapter;
 use App\Services\Media\ClamAvMediaMalwareScanner;
+use App\Services\Media\TrustedAdminImageScanner;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -75,7 +76,13 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(MediaMalwareScanner::class, ClamAvMediaMalwareScanner::class);
+        $this->app->bind(MediaMalwareScanner::class, function ($app): MediaMalwareScanner {
+            return match ((string) config('sole_media.malware_scanner_driver', 'clamav')) {
+                'clamav' => $app->make(ClamAvMediaMalwareScanner::class),
+                'trusted-admin-reencode' => $app->make(TrustedAdminImageScanner::class),
+                default => throw new RuntimeException('Unsupported media security driver configuration.'),
+            };
+        });
         $this->app->bind(OtpSender::class, KavenegarOtpSender::class);
         $this->app->singleton(NotificationChannelAdapter::class, DisabledNotificationChannelAdapter::class);
         $this->app->singleton(PaymentGateway::class, function ($app): PaymentGateway {

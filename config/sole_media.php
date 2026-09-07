@@ -8,6 +8,7 @@ return [
     'max_width' => (int) env('SOLE_MEDIA_MAX_WIDTH', 8000),
     'max_height' => (int) env('SOLE_MEDIA_MAX_HEIGHT', 8000),
     'max_pixels' => (int) env('SOLE_MEDIA_MAX_PIXELS', 40000000),
+    'malware_scanner_driver' => env('SOLE_MEDIA_MALWARE_SCANNER_DRIVER', 'clamav'),
     'malware_scanner_binary' => env('SOLE_MEDIA_MALWARE_SCANNER_BINARY', 'clamscan'),
     'malware_scan_timeout_seconds' => (int) env('SOLE_MEDIA_MALWARE_SCAN_TIMEOUT_SECONDS', 20),
     'immutable_cache_control' => 'public, max-age=31536000, immutable',
