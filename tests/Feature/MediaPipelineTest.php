@@ -126,7 +126,6 @@ class MediaPipelineTest extends TestCase
         app(MediaAttachmentService::class)->attach($ready, 'product', $product->getKey(), 'main');
     }
 
-
     public function test_low_memory_trusted_admin_driver_records_truthful_security_evidence(): void
     {
         Storage::fake('media_quarantine');
